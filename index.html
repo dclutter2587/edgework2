@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EdgeWork — NHL DFS Analytics</title>
+<meta name="description" content="Professional NHL Daily Fantasy projection tool. 5v5, even strength, and all-strength analysis with PK boosts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Barlow+Condensed:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Root ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080c14;
+  --bg-mid:    #0d1422;
+  --bg-surf:   #131d2e;
+  --bg-raise:  #1a2640;
+  --border:    rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.14);
+  --gold:      #d4a843;
+  --gold-dim:  rgba(212,168,67,0.18);
+  --gold-glow: rgba(212,168,67,0.06);
+  --red:       #e05252;
+  --red-dim:   rgba(224,82,82,0.15);
+  --green:     #2dd87a;
+  --green-dim: rgba(45,216,122,0.15);
+  --blue:      #5aacff;
+  --blue-dim:  rgba(90,172,255,0.15);
+  --cyan:      #3dd8cc;
+  --text-1:    #eef2ff;
+  --text-2:    #7a90b8;
+  --text-3:    #3d5070;
+  --mono:      'DM Mono', monospace;
+  --sans:      'DM Sans', sans-serif;
+  --display:   'Barlow Condensed', sans-serif;
+  --radius:    6px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Rink grid overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(90,172,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90,172,255,0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Glow orbs */
+.orb {
+  position: fixed; border-radius: 50%; filter: blur(120px);
+  pointer-events: none; z-index: 0; opacity: 0.25;
+}
+.orb-1 { width: 600px; height: 600px; background: #1a3a6e; top: -200px; right: -100px; }
+.orb-2 { width: 400px; height: 400px; background: #2a1a0a; bottom: -100px; left: -100px; }
+
+.app { position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; padding: 0 20px 60px; }
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.header {
+  padding: 28px 0 22px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  border-bottom: 1px solid var(--border-hi);
+  margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+  animation: fadeUp 0.5s ease both;
+}
+.logo { display: flex; flex-direction: column; gap: 1px; }
+.logo-eye { font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; }
+.logo-mark {
+  font-family: var(--display); font-size: 48px; font-weight: 800;
+  letter-spacing: 0.02em; line-height: 1; color: var(--text-1);
+  display: flex; align-items: baseline; gap: 0;
+}
+.logo-mark .edge { color: var(--text-1); }
+.logo-mark .work {
+  color: transparent;
+  background: linear-gradient(135deg, var(--gold) 0%, #f5c96a 50%, var(--gold) 100%);
+  -webkit-background-clip: text; background-clip: text;
+}
+.logo-tagline { font-size: 12px; color: var(--text-3); margin-top: 2px; font-weight: 300; letter-spacing: 0.02em; }
+
+.header-meta { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.series-pill {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--bg-surf); border: 1px solid var(--border-hi);
+  padding: 6px 14px; border-radius: 20px; color: var(--text-2);
+  display: flex; align-items: center; gap: 10px;
+}
+.series-score { color: var(--text-1); font-weight: 500; }
+.live { display: flex; align-items: center; gap: 5px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 1.8s ease infinite; }
+.live-label { font-size: 9px; color: var(--green); letter-spacing: 0.1em; text-transform: uppercase; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+/* ── Nav ───────────────────────────────────────────────────────────────── */
+.nav {
+  display: flex; gap: 0; margin-bottom: 24px;
+  background: var(--bg-surf); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 4px; width: fit-content;
+  animation: fadeUp 0.5s 0.1s ease both;
+}
+.nav-btn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.07em;
+  text-transform: uppercase; padding: 8px 18px; border-radius: 4px;
+  border: none; cursor: pointer; background: transparent;
+  color: var(--text-3); transition: all 0.15s;
+}
+.nav-btn:hover:not(.active) { color: var(--text-2); }
+.nav-btn.active {
+  background: var(--bg-raise); color: var(--text-1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* ── Shared card ───────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-surf); border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.card-title {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 14px;
+}
+
+/* ── Stat pills ────────────────────────────────────────────────────────── */
+.stat-row {
+  display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+  animation: fadeUp 0.5s 0.15s ease both;
+}
+.stat-pill {
+  background: var(--bg-surf); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 16px;
+  display: flex; flex-direction: column; gap: 3px; min-width: 100px;
+  transition: border-color 0.15s;
+}
+.stat-pill:hover { border-color: var(--border-hi); }
+.sp-label { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.sp-val { font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--text-1); line-height: 1; }
+.sp-sub { font-size: 10px; color: var(--text-3); }
+
+/* ── Filter row ────────────────────────────────────────────────────────── */
+.filter-row {
+  display: flex; gap: 6px; margin-bottom: 16px;
+  align-items: center; flex-wrap: wrap;
+  animation: fadeUp 0.5s 0.2s ease both;
+}
+.filter-group { display: flex; gap: 4px; align-items: center; }
+.filter-label { font-family: var(--mono); font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; padding-right: 2px; }
+.filter-sep { width: 1px; height: 14px; background: var(--border-hi); margin: 0 4px; }
+.fbtn {
+  font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 3px;
+  border: 1px solid var(--border); background: transparent; color: var(--text-3);
+  cursor: pointer; transition: all 0.12s; letter-spacing: 0.03em;
+}
+.fbtn.on { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+.fbtn.on.gold-f { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.fbtn.on.red-f { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.fbtn.on.green-f { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto; border-radius: var(--radius);
+  border: 1px solid var(--border);
+  animation: fadeUp 0.5s 0.25s ease both;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--bg-mid); }
+th {
+  font-family: var(--mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-3); padding: 10px 12px;
+  text-align: right; white-space: nowrap; cursor: pointer;
+  user-select: none; border-bottom: 1px solid var(--border-hi);
+  transition: color 0.12s;
+}
+th:hover { color: var(--text-2); }
+th.sorted { color: var(--gold); }
+th:first-child, th:nth-child(2), th:nth-child(3) { text-align: left; }
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s; cursor: default;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg-raise); }
+tbody tr.pinned { background: rgba(212,168,67,0.04); }
+tbody tr.pinned td:first-child { border-left: 2px solid var(--gold); }
+
+td { padding: 9px 12px; font-size: 13px; text-align: right; color: var(--text-2); }
+td:first-child { text-align: left; }
+td:nth-child(2), td:nth-child(3) { text-align: left; }
+
+/* Cell components */
+.rank { font-family: var(--mono); font-size: 11px; color: var(--text-3); width: 24px; display: inline-block; }
+.pname { font-size: 13px; color: var(--text-1); font-weight: 500; }
+.pmeta { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-top: 1px; }
+
+.chip {
+  display: inline-block; font-family: var(--mono); font-size: 9px;
+  font-weight: 500; padding: 1px 5px; border-radius: 2px;
+  letter-spacing: 0.04em; vertical-align: middle;
+}
+.chip-C { background: rgba(130,100,255,0.15); color: #a899ff; border: 1px solid rgba(130,100,255,0.25); }
+.chip-W { background: rgba(45,216,122,0.1); color: #5de0a0; border: 1px solid rgba(45,216,122,0.2); }
+.chip-D { background: rgba(212,168,67,0.1); color: var(--gold); border: 1px solid rgba(212,168,67,0.2); }
+.chip-G { background: rgba(224,82,82,0.1); color: #ff9999; border: 1px solid rgba(224,82,82,0.2); }
+.chip-VGK { background: rgba(212,168,67,0.08); color: var(--gold); border: 1px solid rgba(212,168,67,0.15); margin-left: 3px; }
+.chip-CAR { background: rgba(224,82,82,0.08); color: var(--red); border: 1px solid rgba(224,82,82,0.15); margin-left: 3px; }
+
+.dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; vertical-align: middle; margin-left: 3px; }
+.dot-pp1 { background: var(--gold); }
+.dot-pp2 { background: var(--text-3); }
+.dot-pk  { background: var(--green); }
+
+.mono { font-family: var(--mono); font-size: 12px; }
+.hi { color: var(--green) !important; }
+.mid { color: var(--blue) !important; }
+.lo { color: var(--text-3) !important; }
+.neg { color: var(--red) !important; }
+
+.bar-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.bar { display: inline-block; height: 3px; border-radius: 2px; background: var(--blue); vertical-align: middle; transition: width 0.3s ease; }
+
+.ovr-badge {
+  font-family: var(--mono); font-size: 8px; padding: 1px 4px; border-radius: 2px;
+  background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(212,168,67,0.3);
+  margin-left: 5px; vertical-align: middle;
+}
+
+/* ── Matchup tab ───────────────────────────────────────────────────────── */
+.matchup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.team-col-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-hi);
+}
+.team-wordmark {
+  font-family: var(--display); font-size: 34px; font-weight: 800;
+  letter-spacing: 0.06em; line-height: 1;
+}
+.wordmark-VGK { color: var(--gold); }
+.wordmark-CAR { color: var(--red); }
+.team-total-proj { text-align: right; }
+.ttp-label { font-family: var(--mono); font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+.ttp-val { font-family: var(--display); font-size: 24px; font-weight: 700; color: var(--text-1); }
+
+.line-card {
+  background: var(--bg-surf); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+}
+.line-card.vgk { border-left: 2px solid var(--gold); }
+.line-card.car { border-left: 2px solid var(--red); }
+.line-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+}
+.lh-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; }
+.lh-right { display: flex; gap: 10px; align-items: center; }
+.lh-pp { font-family: var(--mono); font-size: 10px; }
+.lh-pp.pp1 { color: var(--gold); }
+.lh-pp.pp2 { color: var(--text-3); }
+.lh-total { font-family: var(--mono); font-size: 10px; color: var(--text-2); }
+
+.line-player {
+  display: grid; grid-template-columns: 22px 24px 1fr 46px 54px;
+  align-items: center; padding: 7px 12px; gap: 6px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.line-player:last-child { border-bottom: none; }
+.line-player:hover { background: var(--bg-raise); }
+.lp-rank { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+.lp-name { font-size: 12px; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-sal { font-family: var(--mono); font-size: 10px; color: var(--text-3); text-align: right; }
+.lp-proj { font-family: var(--mono); font-size: 12px; text-align: right; font-weight: 500; }
+
+/* ── Import tab ────────────────────────────────────────────────────────── */
+.import-grid { display: flex; flex-direction: column; gap: 16px; }
+.import-card { padding: 20px; }
+.import-desc { font-size: 13px; color: var(--text-2); line-height: 1.65; margin-bottom: 14px; }
+textarea {
+  width: 100%; min-height: 90px; background: var(--bg-mid);
+  border: 1px dashed var(--border-hi); border-radius: var(--radius);
+  padding: 12px; color: var(--text-2); font-family: var(--mono);
+  font-size: 11px; outline: none; resize: vertical; line-height: 1.6;
+  transition: border-color 0.15s;
+}
+textarea:focus { border-color: rgba(212,168,67,0.4); border-style: solid; }
+textarea::placeholder { color: var(--text-3); }
+.btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 8px 16px; border-radius: 4px;
+  border: 1px solid; cursor: pointer; transition: all 0.15s;
+}
+.btn-gold { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.btn-gold:hover { background: var(--gold); color: var(--bg); }
+.btn-ghost { background: transparent; border-color: var(--border-hi); color: var(--text-2); }
+.btn-ghost:hover { border-color: var(--text-2); color: var(--text-1); }
+.btn-red { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+.code-block {
+  background: var(--bg-mid); border: 1px solid var(--border-hi);
+  border-radius: var(--radius); padding: 14px 16px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.8;
+  overflow-x: auto; color: #a899ff;
+}
+.c-comment { color: var(--text-3); }
+.c-kw { color: var(--gold); }
+.c-str { color: var(--green); }
+.c-fn { color: var(--blue); }
+
+.override-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--bg-mid);
+  border: 1px solid var(--border); border-radius: 4px;
+  font-family: var(--mono); font-size: 11px;
+}
+.override-item .oi-name { color: var(--text-1); flex: 1; }
+.override-item .oi-type { color: var(--text-3); }
+.override-item .oi-remove { color: var(--red); cursor: pointer; margin-left: auto; }
+.override-item .oi-remove:hover { color: #ff7777; }
+
+/* ── Settings tab ──────────────────────────────────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.settings-card { padding: 20px; }
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border); gap: 10px;
+}
+.setting-row:last-of-type { border-bottom: none; }
+.setting-label { font-size: 13px; color: var(--text-2); }
+.setting-input {
+  background: var(--bg-mid); border: 1px solid var(--border-hi);
+  border-radius: 4px; padding: 5px 9px; color: var(--text-1);
+  font-family: var(--mono); font-size: 12px; width: 80px; text-align: right; outline: none;
+}
+.setting-input:focus { border-color: rgba(212,168,67,0.4); }
+.toggle {
+  width: 34px; height: 20px; border-radius: 10px;
+  background: var(--bg-mid); border: 1px solid var(--border-hi);
+  cursor: pointer; position: relative; transition: all 0.2s; flex-shrink: 0;
+}
+.toggle.on { background: var(--green-dim); border-color: var(--green); }
+.toggle::after {
+  content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text-3); top: 2px; left: 2px; transition: all 0.2s;
+}
+.toggle.on::after { left: 18px; background: var(--green); }
+
+/* ── Tab system ────────────────────────────────────────────────────────── */
+.tab { display: none; }
+.tab.active { display: block; }
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 48px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.footer-brand { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--text-3); letter-spacing: 0.06em; }
+.footer-brand span { color: var(--gold); }
+.footer-meta { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── About tab ─────────────────────────────────────────────────────────── */
+.about-wrap { max-width: 1000px; }
+
+.about-hero {
+  padding: 48px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+  animation: fadeUp 0.5s ease both;
+}
+.about-hero-label {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--text-3); margin-bottom: 14px;
+}
+.about-hero-title {
+  font-family: var(--display); font-size: 64px; font-weight: 800;
+  line-height: 1.0; letter-spacing: 0.02em; color: var(--text-1);
+}
+.about-hero-accent {
+  color: transparent;
+  background: linear-gradient(135deg, var(--gold) 0%, #f5c96a 60%, var(--gold) 100%);
+  -webkit-background-clip: text; background-clip: text;
+}
+
+.about-body-grid {
+  display: grid; grid-template-columns: 1fr 380px; gap: 48px;
+  animation: fadeUp 0.5s 0.1s ease both;
+}
+
+.about-text-col { display: flex; flex-direction: column; gap: 20px; }
+.about-p {
+  font-size: 15px; line-height: 1.8; color: var(--text-2); font-weight: 300;
+}
+.about-p strong { color: var(--text-1); font-weight: 500; }
+
+.about-quote {
+  display: flex; gap: 16px; margin-top: 8px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.about-quote-bar {
+  width: 3px; flex-shrink: 0; border-radius: 2px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+}
+.about-quote-text {
+  font-size: 14px; line-height: 1.8; color: var(--text-2);
+  font-style: italic; font-weight: 300;
+}
+
+.about-stats-col { display: flex; flex-direction: column; gap: 16px; }
+
+.about-stat-card {
+  background: var(--bg-surf); border: 1px solid var(--border-hi);
+  border-radius: var(--radius); padding: 24px;
+  position: relative; overflow: hidden;
+}
+.about-stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+.asc-label {
+  font-family: var(--display); font-size: 18px; font-weight: 700;
+  letter-spacing: 0.06em; color: var(--text-1); margin-bottom: 2px;
+}
+.asc-sub { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-bottom: 20px; }
+
+.perf-bars { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.perf-bar-row { display: flex; flex-direction: column; gap: 5px; }
+.perf-bar-label { display: flex; justify-content: space-between; align-items: baseline; }
+.perf-bar-name { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
+.perf-bar-val { font-family: var(--display); font-size: 18px; font-weight: 700; }
+.spent-col { color: var(--text-2); }
+.won-col { color: var(--green); }
+.perf-bar-track {
+  height: 8px; background: var(--bg-raise); border-radius: 4px; overflow: hidden;
+}
+.perf-bar-fill { height: 100%; border-radius: 4px; }
+.spent-bar { background: var(--text-3); }
+.won-bar { background: linear-gradient(90deg, var(--green), #6eefc0); }
+
+.perf-net {
+  background: var(--green-dim); border: 1px solid rgba(45,216,122,0.2);
+  border-radius: 4px; padding: 14px 16px; text-align: center;
+}
+.perf-net-label { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); opacity: 0.7; margin-bottom: 4px; }
+.perf-net-val { font-family: var(--display); font-size: 36px; font-weight: 800; color: var(--green); line-height: 1; }
+.perf-net-sub { font-family: var(--mono); font-size: 10px; color: var(--green); opacity: 0.6; margin-top: 4px; }
+
+.perf-divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+.lifetime-stat { text-align: center; padding: 4px 0; }
+.ls-label { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); margin-bottom: 4px; }
+.ls-val { font-family: var(--display); font-size: 28px; font-weight: 700; color: var(--gold); line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
+.ls-approx { font-size: 12px; color: var(--text-3); font-family: var(--mono); font-weight: 400; }
+.ls-sub { font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+.about-pillars {
+  background: var(--bg-surf); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.about-pillar {
+  display: flex; gap: 14px; padding: 14px 16px; align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+.about-pillar:last-child { border-bottom: none; }
+.ap-icon { color: var(--gold); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.ap-title { font-size: 13px; color: var(--text-1); font-weight: 500; margin-bottom: 2px; }
+.ap-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .matchup-grid { grid-template-columns: 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
+  .logo-mark { font-size: 36px; }
+  .header { padding: 20px 0 16px; }
+  .about-body-grid { grid-template-columns: 1fr; }
+  .about-hero-title { font-size: 44px; }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="app">
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-eye">NHL DFS Analytics</div>
+      <div class="logo-mark"><span class="edge">EDGE</span><span class="work">WORK</span></div>
+      <div class="logo-tagline">5v5 · Even Strength · All Strength · PK Analysis</div>
+    </div>
+    <div class="header-meta">
+      <div class="series-pill">
+        <div class="live"><div class="live-dot"></div><span class="live-label">Live</span></div>
+        <span>Stanley Cup Final · Game 3</span>
+        <span class="series-score">VGK 1 — CAR 1</span>
+      </div>
+      <div class="series-pill" style="justify-content:flex-end;">
+        SAT JUN 7 · 8:00 PM ET · T-MOBILE ARENA, LAS VEGAS
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showTab('rankings', this)">Rankings</button>
+    <button class="nav-btn" onclick="showTab('matchup', this)">Matchup</button>
+    <button class="nav-btn" onclick="showTab('import', this)">Import</button>
+    <button class="nav-btn" onclick="showTab('settings', this)">Settings</button>
+    <button class="nav-btn" onclick="showTab('about', this)">About</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       RANKINGS TAB
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-rankings" class="tab active">
+
+    <div class="stat-row" id="stat-row"></div>
+
+    <div class="filter-row">
+      <span class="filter-label">Strength</span>
+      <div class="filter-group">
+        <button class="fbtn on" id="f-5v5" onclick="toggleF('5v5')">5v5</button>
+        <button class="fbtn on gold-f" id="f-es" onclick="toggleF('es')">Even Str</button>
+        <button class="fbtn on" id="f-all" onclick="toggleF('all')">All Str</button>
+        <button class="fbtn on green-f" id="f-pk" onclick="toggleF('pk')">PK Boost</button>
+      </div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Team</span>
+      <div class="filter-group">
+        <button class="fbtn on gold-f" id="f-vgk" onclick="toggleF('vgk')">VGK</button>
+        <button class="fbtn on red-f" id="f-car" onclick="toggleF('car')">CAR</button>
+      </div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Position</span>
+      <div class="filter-group">
+        <button class="fbtn on" id="f-fw" onclick="toggleF('fw')">F</button>
+        <button class="fbtn on" id="f-d" onclick="toggleF('d')">D</button>
+        <button class="fbtn on" id="f-g" onclick="toggleF('g')">G</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sort('rank')">#</th>
+            <th onclick="sort('name')" style="min-width:160px">Player</th>
+            <th onclick="sort('team')">Team</th>
+            <th onclick="sort('salary')">Salary</th>
+            <th onclick="sort('fpavg')">FP Avg</th>
+            <th onclick="sort('cf5')">CF% 5v5</th>
+            <th onclick="sort('esPt60')">ES Pts/60</th>
+            <th onclick="sort('allStr')">All Str</th>
+            <th onclick="sort('proj')" class="sorted">DK Proj ↓</th>
+            <th onclick="sort('value')">Value</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       MATCHUP TAB
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-matchup" class="tab">
+    <div class="matchup-grid" id="matchup-grid"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       IMPORT TAB
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-import" class="tab">
+    <div class="import-grid">
+
+      <div class="card import-card">
+        <div class="card-title">DraftKings Salary CSV</div>
+        <p class="import-desc">
+          Download today's DK salary export (Lineups → Export to CSV). Paste the full CSV content below — player names, salaries, and positions will auto-populate into the rankings table.
+        </p>
+        <textarea id="dk-paste" placeholder="Paste DraftKings CSV here...&#10;&#10;Expected columns: Position, Name+ID, Name, ID, Roster Position, Salary, Game Info, TeamAbbrev, AvgPointsPerGame"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-gold" onclick="parseDK()">Parse Salaries</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('dk-paste').value=''">Clear</button>
+        </div>
+        <div id="dk-status" style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-3);"></div>
+      </div>
+
+      <div class="card import-card">
+        <div class="card-title">Natural Stat Trick — Server-Side Fetch</div>
+        <p class="import-desc">
+          NST blocks browser scraping but not server-side requests. Paste this Google Apps Script into your sheet (Extensions → Apps Script → paste → save). Set the trigger to run daily at 8am and it will pull 5v5, ES, and all-strength data automatically.
+        </p>
+        <div class="code-block">
+          <span class="c-comment">// Extensions → Apps Script → paste this</span><br>
+          <span class="c-kw">function</span> <span class="c-fn">fetchNSTData</span>() {<br>
+          &nbsp;&nbsp;<span class="c-kw">const</span> params = {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;fromseason: <span class="c-str">'20242025'</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;sit: <span class="c-str">'5v5'</span>, <span class="c-comment">// change to 'es', 'all'</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;rate: <span class="c-str">'y'</span>, pos: <span class="c-str">'S'</span>, team: <span class="c-str">'ALL'</span><br>
+          &nbsp;&nbsp;};<br>
+          &nbsp;&nbsp;<span class="c-kw">const</span> res = UrlFetchApp.<span class="c-fn">fetch</span>(buildUrl(params), {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="c-str">'User-Agent'</span>: <span class="c-str">'Mozilla/5.0'</span> }<br>
+          &nbsp;&nbsp;});<br>
+          &nbsp;&nbsp;<span class="c-fn">parseAndWrite</span>(res.<span class="c-fn">getContentText</span>());<br>
+          }<br>
+          <span class="c-kw">function</span> <span class="c-fn">setDailyTrigger</span>() {<br>
+          &nbsp;&nbsp;ScriptApp.<span class="c-fn">newTrigger</span>(<span class="c-str">'fetchNSTData'</span>)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;.<span class="c-fn">timeBased</span>().<span class="c-fn">everyDays</span>(1)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;.<span class="c-fn">atHour</span>(8).<span class="c-fn">create</span>();<br>
+          }
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="copyScript()">Copy Full Script</button>
+        </div>
+      </div>
+
+      <div class="card import-card">
+        <div class="card-title">Manual Overrides</div>
+        <p class="import-desc">Flag injuries, confirm goalies, or adjust line combos before lock. Overridden players are highlighted in the rankings table.</p>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="addOverride('injury','🩹')">+ Injury</button>
+          <button class="btn btn-ghost" onclick="addOverride('goalie','🧤')">+ Goalie</button>
+          <button class="btn btn-ghost" onclick="addOverride('line','🔀')">+ Line Change</button>
+          <button class="btn btn-ghost" onclick="addOverride('note','📝')">+ Note</button>
+        </div>
+        <div id="override-list" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SETTINGS TAB
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-settings" class="tab">
+    <div class="settings-grid">
+
+      <div class="card settings-card">
+        <div class="card-title">Strength Weights</div>
+        <div class="setting-row"><span class="setting-label">5v5 Corsi weight</span><input class="setting-input" id="w-5v5" type="number" value="0.40" step="0.05" min="0" max="1"></div>
+        <div class="setting-row"><span class="setting-label">Even strength weight</span><input class="setting-input" id="w-es" type="number" value="0.30" step="0.05" min="0" max="1"></div>
+        <div class="setting-row"><span class="setting-label">All strength weight</span><input class="setting-input" id="w-all" type="number" value="0.20" step="0.05" min="0" max="1"></div>
+        <div class="setting-row"><span class="setting-label">PK yearly boost</span><input class="setting-input" id="w-pk" type="number" value="0.10" step="0.05" min="0" max="1"></div>
+        <button class="btn btn-gold" style="margin-top:14px;width:100%;" onclick="recalc()">Recalculate Projections</button>
+      </div>
+
+      <div class="card settings-card">
+        <div class="card-title">Window Weights</div>
+        <div class="setting-row"><span class="setting-label">Season baseline</span><input class="setting-input" id="w-season" type="number" value="0.25" step="0.05"></div>
+        <div class="setting-row"><span class="setting-label">Last 5 games</span><input class="setting-input" id="w-l5" type="number" value="0.40" step="0.05"></div>
+        <div class="setting-row"><span class="setting-label">Last 10 games</span><input class="setting-input" id="w-l10" type="number" value="0.35" step="0.05"></div>
+        <div class="setting-row">
+          <span class="setting-label">Include L5 window</span>
+          <div class="toggle on" id="t-l5" onclick="tog('l5')"></div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Include L10 window</span>
+          <div class="toggle on" id="t-l10" onclick="tog('l10')"></div>
+        </div>
+      </div>
+
+      <div class="card settings-card">
+        <div class="card-title">Display Options</div>
+        <div class="setting-row"><span class="setting-label">Show projection bars</span><div class="toggle on" id="t-bars" onclick="tog('bars')"></div></div>
+        <div class="setting-row"><span class="setting-label">Show value score</span><div class="toggle on" id="t-val" onclick="tog('val')"></div></div>
+        <div class="setting-row"><span class="setting-label">Color by projection tier</span><div class="toggle on" id="t-color" onclick="tog('color')"></div></div>
+        <div class="setting-row"><span class="setting-label">Highlight PK players</span><div class="toggle on" id="t-pkhl" onclick="tog('pkhl')"></div></div>
+      </div>
+
+      <div class="card settings-card">
+        <div class="card-title">Slate Info</div>
+        <div class="setting-row"><span class="setting-label">Slate name</span><input class="setting-input" id="s-name" type="text" value="SCF Game 3" style="width:120px;text-align:left;"></div>
+        <div class="setting-row"><span class="setting-label">Game time (ET)</span><input class="setting-input" id="s-time" type="text" value="8:00 PM" style="width:120px;text-align:left;"></div>
+        <div class="setting-row"><span class="setting-label">Contest type</span><input class="setting-input" id="s-type" type="text" value="Showdown" style="width:120px;text-align:left;"></div>
+        <div class="setting-row"><span class="setting-label">DK cap</span><input class="setting-input" id="s-cap" type="number" value="50000"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ABOUT TAB
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-about" class="tab">
+    <div class="about-wrap">
+
+      <!-- Hero statement -->
+      <div class="about-hero">
+        <div class="about-hero-label">The Philosophy</div>
+        <h1 class="about-hero-title">Hockey first.<br>Stats second.<br><span class="about-hero-accent">Edge always.</span></h1>
+      </div>
+
+      <!-- Philosophy block -->
+      <div class="about-body-grid">
+        <div class="about-text-col">
+          <p class="about-p">
+            Most DFS tools are built by stat nerds for stat nerds. This one isn't. EdgeWork is built around a simple idea: the best plays in daily fantasy aren't found by running the most complex model — they're found by understanding the game.
+          </p>
+          <p class="about-p">
+            The approach here centers on 5v5, even strength, and all-strength data — where most of hockey actually happens — combined with a yearly penalty kill boost for players who earn ice time in every situation. These are the numbers that go overlooked. These are the players who win hockey games, not just fantasy points.
+          </p>
+          <p class="about-p">
+            And then there's the eye test. What does a player bring to his team that doesn't show up in a box score? Is he playing with urgency? Generating zone entries? Winning puck battles in the corners? That layer matters, and it's where the real contrarian edge lives — not just being different for the sake of it, but being right about something everyone else missed.
+          </p>
+          <div class="about-quote">
+            <div class="about-quote-bar"></div>
+            <p class="about-quote-text">
+              "My goal in all of this is to enjoy the games and the sport of hockey. I hope you might win a little money — but more so, I hope you find a new favorite player or a second or third team to root for. Whatever happens, enjoy the chaos. And if things don't go your way, stay off fucking social media."
+            </p>
+          </div>
+        </div>
+
+        <!-- Stats column -->
+        <div class="about-stats-col">
+          <div class="about-stat-card">
+            <div class="asc-label">2026 Performance</div>
+            <div class="asc-sub">Jan 2026 — Present · DraftKings</div>
+
+            <div class="perf-bars">
+              <div class="perf-bar-row">
+                <div class="perf-bar-label">
+                  <span class="perf-bar-name">Spent</span>
+                  <span class="perf-bar-val spent-col">$46,714</span>
+                </div>
+                <div class="perf-bar-track">
+                  <div class="perf-bar-fill spent-bar" style="width:66%"></div>
+                </div>
+              </div>
+              <div class="perf-bar-row">
+                <div class="perf-bar-label">
+                  <span class="perf-bar-name">Won</span>
+                  <span class="perf-bar-val won-col">$70,572</span>
+                </div>
+                <div class="perf-bar-track">
+                  <div class="perf-bar-fill won-bar" style="width:100%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="perf-net">
+              <div class="perf-net-label">Net Total</div>
+              <div class="perf-net-val">+$23,858</div>
+              <div class="perf-net-sub">51% ROI · 2026 season</div>
+            </div>
+
+            <div class="perf-divider"></div>
+
+            <div class="lifetime-stat">
+              <div class="ls-label">Lifetime Net</div>
+              <div class="ls-val">+$40,000<span class="ls-approx">approx</span></div>
+              <div class="ls-sub">4 years · consistent positive returns</div>
+            </div>
+          </div>
+
+          <div class="about-pillars">
+            <div class="about-pillar">
+              <div class="ap-icon">◈</div>
+              <div class="ap-text">
+                <div class="ap-title">5v5 Corsi</div>
+                <div class="ap-desc">Where the game is played. Possession tells the real story.</div>
+              </div>
+            </div>
+            <div class="about-pillar">
+              <div class="ap-icon">◈</div>
+              <div class="ap-text">
+                <div class="ap-title">Even Strength</div>
+                <div class="ap-desc">Pts/60 at ES separates true contributors from PP dependents.</div>
+              </div>
+            </div>
+            <div class="about-pillar">
+              <div class="ap-icon">◈</div>
+              <div class="ap-text">
+                <div class="ap-title">PK Boost</div>
+                <div class="ap-desc">Yearly PK usage signals trusted two-way players with floor.</div>
+              </div>
+            </div>
+            <div class="about-pillar">
+              <div class="ap-icon">◈</div>
+              <div class="ap-text">
+                <div class="ap-title">The Eye Test</div>
+                <div class="ap-desc">Zone entries, board battles, urgency. The edge no model captures.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-brand">EDGE<span>WORK</span></div>
+    <div class="footer-meta">NHL DFS Analytics · Built with game data + edge</div>
+  </footer>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════════════════════════════ */
+const PLAYERS = [
+  { name:'Shea Theodore',      pos:'D', team:'VGK', line:1, salary:7200,  fpavg:9.7,  cf5:54.2, esPt60:1.82, allStr:2.10, pk:false, pp:'PP1', proj:13.27 },
+  { name:'Jack Eichel',        pos:'C', team:'VGK', line:1, salary:10400, fpavg:13.6, cf5:52.1, esPt60:2.80, allStr:3.20, pk:false, pp:'PP1', proj:11.69 },
+  { name:'Brayden McNabb',     pos:'D', team:'VGK', line:1, salary:4400,  fpavg:7.0,  cf5:53.8, esPt60:1.10, allStr:1.40, pk:true,  pp:'',    proj:12.28 },
+  { name:'Pavel Dorofeyev',    pos:'W', team:'VGK', line:1, salary:8400,  fpavg:10.5, cf5:51.4, esPt60:1.65, allStr:2.10, pk:false, pp:'PP1', proj:8.33  },
+  { name:'Ivan Barbashev',     pos:'W', team:'VGK', line:1, salary:5600,  fpavg:7.5,  cf5:52.0, esPt60:1.40, allStr:1.80, pk:true,  pp:'PP1', proj:10.18 },
+  { name:'Brett Howden',       pos:'W', team:'VGK', line:2, salary:6000,  fpavg:6.8,  cf5:50.1, esPt60:1.20, allStr:1.60, pk:false, pp:'PP2', proj:18.50 },
+  { name:'William Karlsson',   pos:'C', team:'VGK', line:2, salary:5400,  fpavg:7.7,  cf5:51.3, esPt60:1.35, allStr:1.70, pk:true,  pp:'PP2', proj:10.97 },
+  { name:'Mitch Marner',       pos:'W', team:'VGK', line:2, salary:9400,  fpavg:11.6, cf5:55.3, esPt60:2.40, allStr:3.10, pk:false, pp:'PP2', proj:14.53 },
+  { name:'Noah Hanifin',       pos:'D', team:'VGK', line:2, salary:4200,  fpavg:8.2,  cf5:52.7, esPt60:1.20, allStr:1.50, pk:true,  pp:'PP2', proj:6.62  },
+  { name:'Rasmus Andersson',   pos:'D', team:'VGK', line:2, salary:5800,  fpavg:10.2, cf5:50.8, esPt60:1.05, allStr:1.30, pk:false, pp:'PP2', proj:5.97  },
+  { name:'Mark Stone',         pos:'W', team:'VGK', line:3, salary:7600,  fpavg:10.4, cf5:53.1, esPt60:1.60, allStr:2.00, pk:false, pp:'PP1', proj:9.48  },
+  { name:'Tomas Hertl',        pos:'W', team:'VGK', line:3, salary:6400,  fpavg:10.7, cf5:51.0, esPt60:1.55, allStr:1.90, pk:false, pp:'',    proj:8.71  },
+  { name:'Colton Sissons',     pos:'C', team:'VGK', line:3, salary:3000,  fpavg:5.0,  cf5:49.2, esPt60:0.90, allStr:1.10, pk:true,  pp:'',    proj:6.43  },
+  { name:'Nic Dowd',           pos:'C', team:'VGK', line:4, salary:2400,  fpavg:5.6,  cf5:47.8, esPt60:0.70, allStr:0.90, pk:true,  pp:'',    proj:6.81  },
+  { name:'William Carrier',    pos:'W', team:'VGK', line:4, salary:2000,  fpavg:3.5,  cf5:46.0, esPt60:0.50, allStr:0.70, pk:false, pp:'',    proj:4.81  },
+  { name:'Seth Jarvis',        pos:'W', team:'CAR', line:1, salary:9800,  fpavg:12.1, cf5:55.8, esPt60:2.10, allStr:2.60, pk:false, pp:'PP1', proj:11.21 },
+  { name:'Andrei Svechnikov',  pos:'W', team:'CAR', line:1, salary:8200,  fpavg:9.3,  cf5:54.1, esPt60:1.90, allStr:2.40, pk:false, pp:'PP1', proj:11.32 },
+  { name:'Sebastian Aho',      pos:'C', team:'CAR', line:1, salary:9200,  fpavg:11.3, cf5:56.2, esPt60:2.50, allStr:3.10, pk:true,  pp:'PP1', proj:5.67  },
+  { name:'Jaccob Slavin',      pos:'D', team:'CAR', line:1, salary:4800,  fpavg:7.5,  cf5:57.3, esPt60:1.30, allStr:1.70, pk:true,  pp:'PP1', proj:9.82  },
+  { name:'Jalen Chatfield',    pos:'D', team:'CAR', line:1, salary:3400,  fpavg:4.9,  cf5:52.0, esPt60:0.95, allStr:1.20, pk:false, pp:'',    proj:13.50 },
+  { name:'Taylor Hall',        pos:'W', team:'CAR', line:2, salary:6800,  fpavg:7.1,  cf5:51.6, esPt60:1.40, allStr:1.80, pk:false, pp:'PP2', proj:13.16 },
+  { name:'Logan Stankoven',    pos:'C', team:'CAR', line:2, salary:8800,  fpavg:7.7,  cf5:52.4, esPt60:1.55, allStr:2.00, pk:false, pp:'PP2', proj:12.01 },
+  { name:'Jackson Blake',      pos:'W', team:'CAR', line:2, salary:7000,  fpavg:6.2,  cf5:51.0, esPt60:1.30, allStr:1.65, pk:false, pp:'PP2', proj:12.12 },
+  { name:"K'Andre Miller",     pos:'D', team:'CAR', line:2, salary:5000,  fpavg:7.0,  cf5:53.5, esPt60:1.25, allStr:1.60, pk:false, pp:'PP2', proj:9.56  },
+  { name:'Sean Walker',        pos:'D', team:'CAR', line:2, salary:3600,  fpavg:5.7,  cf5:50.2, esPt60:0.85, allStr:1.10, pk:false, pp:'',    proj:5.45  },
+  { name:'Nikolaj Ehlers',     pos:'W', team:'CAR', line:3, salary:8000,  fpavg:11.4, cf5:56.0, esPt60:2.30, allStr:2.90, pk:false, pp:'PP1', proj:13.67 },
+  { name:'Shayne Gostisbehere',pos:'D', team:'CAR', line:3, salary:6600,  fpavg:7.8,  cf5:54.8, esPt60:1.60, allStr:2.10, pk:false, pp:'PP1', proj:10.12 },
+  { name:'Jordan Staal',       pos:'C', team:'CAR', line:3, salary:4000,  fpavg:5.6,  cf5:53.0, esPt60:1.10, allStr:1.40, pk:true,  pp:'PP1', proj:9.75  },
+  { name:'Jordan Martinook',   pos:'W', team:'CAR', line:3, salary:3200,  fpavg:6.1,  cf5:50.5, esPt60:0.95, allStr:1.20, pk:true,  pp:'',    proj:7.31  },
+  { name:'Eric Robinson',      pos:'W', team:'CAR', line:4, salary:2000,  fpavg:4.8,  cf5:47.0, esPt60:0.80, allStr:1.00, pk:false, pp:'',    proj:8.00  },
+  { name:'Mark Jankowski',     pos:'C', team:'CAR', line:4, salary:2600,  fpavg:4.4,  cf5:46.5, esPt60:0.70, allStr:0.90, pk:false, pp:'',    proj:7.19  },
+];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════════════════════ */
+let state = {
+  sortCol: 'proj', sortDir: -1,
+  filters: { '5v5':true, es:true, all:true, pk:true, vgk:true, car:true, fw:true, d:true, g:true },
+  toggles: { l5:true, l10:true, bars:true, val:true, color:true, pkhl:true },
+  overrides: [],
+  weights: { '5v5':0.40, es:0.30, all:0.20, pk:0.10, l5:0.40, l10:0.35, season:0.25 }
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PROJECTION ENGINE
+══════════════════════════════════════════════════════════════════════════ */
+function proj(p) {
+  const pkBoost = (p.pk && state.filters.pk) ? p.fpavg * state.weights.pk * 0.5 : 0;
+  return +(p.proj + pkBoost).toFixed(2);
+}
+function value(p) { return +((proj(p) / (p.salary / 1000))).toFixed(2); }
+function projColor(v) { return v >= 12 ? 'hi' : v >= 8 ? 'mid' : v >= 5 ? '' : 'lo'; }
+function valColor(v)  { return v >= 2.0 ? 'hi' : v >= 1.4 ? 'mid' : ''; }
+function cfColor(v)   { return v >= 54 ? 'hi' : v >= 51 ? 'mid' : 'lo'; }
+function esColor(v)   { return v >= 2.0 ? 'hi' : v >= 1.3 ? 'mid' : ''; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RENDER RANKINGS
+══════════════════════════════════════════════════════════════════════════ */
+function renderRankings() {
+  const { filters, sortCol, sortDir, overrides, toggles } = state;
+
+  let data = PLAYERS.map(p => ({ ...p, _proj: proj(p), _val: value(p) })).filter(p => {
+    if (!filters.vgk && p.team === 'VGK') return false;
+    if (!filters.car && p.team === 'CAR') return false;
+    if (!filters.fw && (p.pos === 'W' || p.pos === 'C')) return false;
+    if (!filters.d && p.pos === 'D') return false;
+    if (!filters.g && p.pos === 'G') return false;
+    return true;
+  });
+
+  data.sort((a, b) => {
+    const av = sortCol === '_proj' || sortCol === 'proj' ? a._proj
+             : sortCol === '_val'  || sortCol === 'value' ? a._val
+             : a[sortCol] ?? a._proj;
+    const bv = sortCol === '_proj' || sortCol === 'proj' ? b._proj
+             : sortCol === '_val'  || sortCol === 'value' ? b._val
+             : b[sortCol] ?? b._proj;
+    return typeof av === 'string' ? av.localeCompare(bv) * sortDir : (av - bv) * sortDir;
+  });
+
+  const maxP = Math.max(...data.map(d => d._proj));
+
+  document.getElementById('tbody').innerHTML = data.map((p, i) => {
+    const isOvr = overrides.some(o => o.name === p.name);
+    const ovrBadge = isOvr ? '<span class="ovr-badge">OVR</span>' : '';
+    const pkDot = p.pk && toggles.pkhl ? '<span class="dot dot-pk" title="PK boost"></span>' : '';
+    const ppDot = p.pp === 'PP1' ? '<span class="dot dot-pp1" title="PP1"></span>'
+                : p.pp === 'PP2' ? '<span class="dot dot-pp2" title="PP2"></span>' : '';
+    const barW = Math.round((p._proj / maxP) * 56);
+    const barHtml = toggles.bars
+      ? `<span class="bar" style="width:${barW}px"></span>` : '';
+    const pColor = toggles.color ? projColor(p._proj) : '';
+    const vColor = toggles.color ? valColor(p._val) : '';
+
+    return `<tr class="${isOvr ? 'pinned' : ''}">
+      <td><span class="rank">${i+1}</span></td>
+      <td>
+        <div class="pname">${p.name}${ovrBadge}</div>
+        <div class="pmeta">Line ${p.line} · ${p.pp || 'EVS'} ${ppDot}${pkDot}</div>
+      </td>
+      <td>
+        <span class="chip chip-${p.pos}">${p.pos}</span>
+        <span class="chip chip-${p.team}">${p.team}</span>
+      </td>
+      <td class="mono">$${(p.salary/1000).toFixed(1)}K</td>
+      <td class="mono">${p.fpavg.toFixed(1)}</td>
+      <td class="mono ${cfColor(p.cf5)}">${p.cf5.toFixed(1)}%</td>
+      <td class="mono ${esColor(p.esPt60)}">${p.esPt60.toFixed(2)}</td>
+      <td class="mono ${toggles.color ? (p.allStr >= 2.5 ? 'hi' : p.allStr >= 1.6 ? 'mid' : '') : ''}">${p.allStr.toFixed(2)}</td>
+      <td class="mono ${pColor}"><span class="bar-wrap">${barHtml}${p._proj.toFixed(2)}</span></td>
+      <td class="mono ${vColor}">${toggles.val ? p._val.toFixed(2)+'x' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Stat pills
+  const totalSal = data.reduce((s,p) => s + p.salary, 0);
+  document.getElementById('stat-row').innerHTML = [
+    { label:'Players', val: data.length, sub:'This slate' },
+    { label:'Top Proj', val: data[0]?._proj.toFixed(1) ?? '—', sub:'DK pts' },
+    { label:'Avg Salary', val: '$'+(totalSal/data.length/1000).toFixed(1)+'K', sub:'Per player' },
+    { label:'VGK Total', val: PLAYERS.filter(p=>p.team==='VGK').reduce((s,p)=>s+proj(p),0).toFixed(0), sub:'Proj pts' },
+    { label:'CAR Total', val: PLAYERS.filter(p=>p.team==='CAR').reduce((s,p)=>s+proj(p),0).toFixed(0), sub:'Proj pts' },
+  ].map(s => `<div class="stat-pill"><div class="sp-label">${s.label}</div><div class="sp-val">${s.val}</div><div class="sp-sub">${s.sub}</div></div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RENDER MATCHUP
+══════════════════════════════════════════════════════════════════════════ */
+function renderMatchup() {
+  const grid = document.getElementById('matchup-grid');
+  grid.innerHTML = ['VGK','CAR'].map(team => {
+    const players = PLAYERS.filter(p => p.team === team);
+    const lines = [...new Set(players.map(p => p.line))].sort();
+    const total = players.reduce((s,p) => s + proj(p), 0);
+    const isVGK = team === 'VGK';
+    const fullName = isVGK ? 'Vegas Golden Knights' : 'Carolina Hurricanes';
+    const accent = isVGK ? 'vgk' : 'car';
+
+    const lineBlocks = lines.map(ln => {
+      const lp = players.filter(p => p.line === ln).sort((a,b) => proj(b)-proj(a));
+      const ppUnit = lp.find(p => p.pp)?.pp || '';
+      const ppClass = ppUnit === 'PP1' ? 'pp1' : ppUnit === 'PP2' ? 'pp2' : '';
+      const lineTotal = lp.reduce((s,p) => s + proj(p), 0);
+      return `<div class="line-card ${accent}">
+        <div class="line-head">
+          <span class="lh-label">Line ${ln}</span>
+          <div class="lh-right">
+            ${ppUnit ? `<span class="lh-pp ${ppClass}">${ppUnit}</span>` : ''}
+            <span class="lh-total">${lineTotal.toFixed(1)} pts</span>
+          </div>
+        </div>
+        ${lp.map((p,i) => {
+          const pr = proj(p);
+          const pc = projColor(pr);
+          const pkDot = p.pk ? '<span class="dot dot-pk"></span>' : '';
+          return `<div class="line-player">
+            <span class="lp-rank">${i+1}</span>
+            <span class="chip chip-${p.pos}">${p.pos}</span>
+            <span class="lp-name">${p.name}${pkDot}</span>
+            <span class="lp-sal">$${(p.salary/1000).toFixed(1)}K</span>
+            <span class="lp-proj ${pc}">${pr.toFixed(2)}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+
+    return `<div>
+      <div class="team-col-header">
+        <div class="team-wordmark wordmark-${team}">${team}</div>
+        <div class="team-total-proj">
+          <div class="ttp-label">${fullName}</div>
+          <div class="ttp-val">${total.toFixed(1)} pts</div>
+        </div>
+      </div>
+      ${lineBlocks}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UI HANDLERS
+══════════════════════════════════════════════════════════════════════════ */
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'matchup') renderMatchup();
+  if (id === 'rankings') renderRankings();
+}
+
+function toggleF(key) {
+  state.filters[key] = !state.filters[key];
+  const el = document.getElementById('f-' + key);
+  el.classList.toggle('on', state.filters[key]);
+  renderRankings();
+}
+
+function sort(col) {
+  state.sortDir = state.sortCol === col ? state.sortDir * -1 : -1;
+  state.sortCol = col;
+  document.querySelectorAll('th').forEach(t => t.classList.remove('sorted'));
+  event.target.classList.add('sorted');
+  renderRankings();
+}
+
+function tog(key) {
+  state.toggles[key] = !state.toggles[key];
+  document.getElementById('t-' + key).classList.toggle('on', state.toggles[key]);
+  renderRankings();
+}
+
+function recalc() {
+  ['5v5','es','all','pk','l5','l10','season'].forEach(k => {
+    const el = document.getElementById('w-' + k);
+    if (el) state.weights[k] = +el.value;
+  });
+  renderRankings();
+  renderMatchup();
+}
+
+function parseDK() {
+  const raw = document.getElementById('dk-paste').value.trim();
+  if (!raw) return;
+  const lines = raw.split('\n').filter(l => l.trim());
+  let updated = 0;
+  lines.slice(1).forEach(line => {
+    const cols = line.split(',').map(c => c.replace(/"/g,'').trim());
+    if (cols.length < 7) return;
+    const name = cols[2] || cols[1];
+    const salary = parseInt(cols[5]);
+    const fp = parseFloat(cols[8]);
+    const p = PLAYERS.find(pl => pl.name.toLowerCase().includes(name.toLowerCase().split(' ')[1] || name));
+    if (p && salary) { p.salary = salary; updated++; }
+    if (p && fp) p.fpavg = fp;
+  });
+  document.getElementById('dk-status').textContent = `✓ Updated ${updated} player salaries`;
+  renderRankings();
+}
+
+function copyScript() {
+  const script = `// EdgeWork — NST Data Fetcher for Google Apps Script
+// Extensions → Apps Script → paste → Save → Run setDailyTrigger() once
+
+function buildNSTUrl(sit) {
+  const base = 'https://naturalstattrick.com/playerteams.php';
+  const params = new URLSearchParams({
+    fromseason: '20242025', thruseason: '20242025',
+    stype: '3', sit: sit, score: 'all',
+    stdoi: 'std', rate: 'y', team: 'ALL',
+    pos: 'S', loc: 'B', toi: '0', gpfilt: 'none',
+    lines: 'single'
+  });
+  return base + '?' + params.toString();
+}
+
+function fetchNSTData() {
+  const sits = ['5v5', 'es', 'all'];
+  sits.forEach(sit => {
+    try {
+      const res = UrlFetchApp.fetch(buildNSTUrl(sit), {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+        muteHttpExceptions: true
+      });
+      const html = res.getContentText();
+      const sheetName = 'NST_' + sit.toUpperCase();
+      let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+      if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
+      // Store raw HTML for parsing
+      sheet.getRange('A1').setValue(html.substring(0, 50000));
+      sheet.getRange('A2').setValue(new Date().toISOString());
+      Logger.log('Fetched NST ' + sit + ': ' + html.length + ' bytes');
+    } catch(e) {
+      Logger.log('Error fetching ' + sit + ': ' + e.message);
+    }
+  });
+}
+
+function setDailyTrigger() {
+  // Delete existing triggers first
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
+  // Set new daily trigger at 8am
+  ScriptApp.newTrigger('fetchNSTData')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+  Logger.log('Daily trigger set for 8am');
+}`;
+  navigator.clipboard.writeText(script).then(() => {
+    document.querySelector('.btn-ghost').textContent = 'Copied!';
+    setTimeout(() => document.querySelector('.btn-ghost').textContent = 'Copy Full Script', 2000);
+  });
+}
+
+function addOverride(type, icon) {
+  const name = prompt(
+    type === 'injury' ? 'Player name to flag as injured:' :
+    type === 'goalie' ? 'Confirm starting goalie (name):' :
+    type === 'line'   ? 'Player name + new line (e.g. "Ehlers L1"):' :
+    'Player name + note:'
+  );
+  if (!name?.trim()) return;
+  state.overrides.push({ type, icon, name: name.trim(), time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
+  renderOverrides();
+  renderRankings();
+}
+
+function removeOverride(i) {
+  state.overrides.splice(i, 1);
+  renderOverrides();
+  renderRankings();
+}
+
+function renderOverrides() {
+  document.getElementById('override-list').innerHTML = state.overrides.map((o,i) =>
+    `<div class="override-item">
+      <span>${o.icon}</span>
+      <span class="oi-name">${o.name}</span>
+      <span class="oi-type">${o.type}</span>
+      <span style="color:var(--text-3);font-family:var(--mono);font-size:10px;">${o.time}</span>
+      <span class="oi-remove" onclick="removeOverride(${i})">✕</span>
+    </div>`
+  ).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════════════════ */
+renderRankings();
+</script>
+</body>
+</html>
