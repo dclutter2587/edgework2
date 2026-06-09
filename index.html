@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -336,11 +336,11 @@ textarea::placeholder { color: var(--ink-light); }
       <div class="header-meta">
         <div class="series-pill">
           <span class="live-dot"></span>
-          <span>Stanley Cup Final · Game 3</span>
-          <span class="series-score">VGK 1 — CAR 1</span>
+          <span>Stanley Cup Final · Game 4</span>
+          <span class="series-score">VGK 2 — CAR 1</span>
         </div>
         <div class="series-pill" style="justify-content:flex-end;">
-          SUN JUN 8 · 8:00 PM ET · T-MOBILE ARENA, LAS VEGAS
+          TUE JUN 10 · 8:00 PM ET · T-MOBILE ARENA, LAS VEGAS
         </div>
       </div>
     </div>
@@ -351,8 +351,6 @@ textarea::placeholder { color: var(--ink-light); }
   <nav class="site-nav">
     <button class="nav-btn active" onclick="showTab('rankings',this)">Rankings</button>
     <button class="nav-btn" onclick="showTab('matchup',this)">Matchup</button>
-    <button class="nav-btn" onclick="showTab('import',this)">Import</button>
-    <button class="nav-btn" onclick="showTab('settings',this)">Settings</button>
     <button class="nav-btn" onclick="showTab('about',this)">About</button>
   </nav>
 
@@ -398,89 +396,6 @@ textarea::placeholder { color: var(--ink-light); }
       <div class="matchup-grid" id="matchup-grid"></div>
     </div>
 
-    <!-- IMPORT -->
-    <div id="tab-import" class="tab">
-      <div class="import-grid">
-        <div class="card">
-          <div class="card-title">DraftKings Salary CSV</div>
-          <p class="card-desc">Download today's DK salary export (Lineups → Export to CSV). Paste the full CSV content below — player names, salaries, and positions will auto-populate into the rankings table.</p>
-          <textarea id="dk-paste" placeholder="Paste DraftKings CSV here...&#10;Expected: Position, Name, Salary, TeamAbbrev, AvgPointsPerGame"></textarea>
-          <div class="btn-row">
-            <button class="btn btn-blue" onclick="parseDK()">Parse Salaries</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('dk-paste').value=''">Clear</button>
-          </div>
-          <div id="dk-status" style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--green);"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Natural Stat Trick — Server-Side Fetch</div>
-          <p class="card-desc">NST blocks browser scraping but not server-side requests. Paste this into your Google Sheet (Extensions → Apps Script). Run <code style="font-family:var(--mono);background:var(--ice);padding:1px 5px;border-radius:2px;">setDailyTrigger()</code> once and it pulls 5v5, ES, and all-strength data every morning at 8am automatically.</p>
-          <div class="code-block">
-            <span class="c-comment">// Extensions → Apps Script → paste → save</span><br>
-            <span class="c-kw">function</span> <span class="c-fn">fetchNSTData</span>() {<br>
-            &nbsp;&nbsp;<span class="c-kw">const</span> res = UrlFetchApp.<span class="c-fn">fetch</span>(buildUrl(<span class="c-str">'5v5'</span>), {<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="c-str">'User-Agent'</span>: <span class="c-str">'Mozilla/5.0'</span> }<br>
-            &nbsp;&nbsp;});<br>
-            &nbsp;&nbsp;<span class="c-fn">parseAndWrite</span>(res.<span class="c-fn">getContentText</span>());<br>
-            }<br>
-            <span class="c-kw">function</span> <span class="c-fn">setDailyTrigger</span>() {<br>
-            &nbsp;&nbsp;ScriptApp.<span class="c-fn">newTrigger</span>(<span class="c-str">'fetchNSTData'</span>)<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;.<span class="c-fn">timeBased</span>().<span class="c-fn">everyDays</span>(1)<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;.<span class="c-fn">atHour</span>(8).<span class="c-fn">create</span>();<br>
-            }
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-ghost" onclick="copyScript()">Copy Full Script</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Manual Overrides</div>
-          <p class="card-desc">Flag injuries, confirm goalies, or adjust line combos before lock. Overridden players are highlighted in the rankings table.</p>
-          <div class="btn-row">
-            <button class="btn btn-ghost" onclick="addOverride('injury','🩹')">+ Injury</button>
-            <button class="btn btn-ghost" onclick="addOverride('goalie','🧤')">+ Goalie</button>
-            <button class="btn btn-ghost" onclick="addOverride('line','🔀')">+ Line Change</button>
-            <button class="btn btn-ghost" onclick="addOverride('note','📝')">+ Note</button>
-          </div>
-          <div id="override-list" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div id="tab-settings" class="tab">
-      <div class="settings-grid">
-        <div class="card">
-          <div class="card-title">Strength Weights</div>
-          <div class="setting-row"><span class="setting-label">5v5 Corsi weight</span><input class="setting-input" id="w-5v5" type="number" value="0.40" step="0.05" min="0" max="1"></div>
-          <div class="setting-row"><span class="setting-label">Even strength weight</span><input class="setting-input" id="w-es" type="number" value="0.30" step="0.05"></div>
-          <div class="setting-row"><span class="setting-label">All strength weight</span><input class="setting-input" id="w-all" type="number" value="0.20" step="0.05"></div>
-          <div class="setting-row"><span class="setting-label">PK yearly boost</span><input class="setting-input" id="w-pk" type="number" value="0.10" step="0.05"></div>
-          <button class="btn btn-blue" style="margin-top:14px;width:100%;" onclick="recalc()">Recalculate Projections</button>
-        </div>
-        <div class="card">
-          <div class="card-title">Window Weights</div>
-          <div class="setting-row"><span class="setting-label">Season baseline</span><input class="setting-input" id="w-season" type="number" value="0.25" step="0.05"></div>
-          <div class="setting-row"><span class="setting-label">Last 5 games</span><input class="setting-input" id="w-l5" type="number" value="0.40" step="0.05"></div>
-          <div class="setting-row"><span class="setting-label">Last 10 games</span><input class="setting-input" id="w-l10" type="number" value="0.35" step="0.05"></div>
-          <div class="setting-row"><span class="setting-label">Include L5 window</span><div class="toggle on" id="t-l5" onclick="tog('l5')"></div></div>
-          <div class="setting-row"><span class="setting-label">Include L10 window</span><div class="toggle on" id="t-l10" onclick="tog('l10')"></div></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Display</div>
-          <div class="setting-row"><span class="setting-label">Show projection bars</span><div class="toggle on" id="t-bars" onclick="tog('bars')"></div></div>
-          <div class="setting-row"><span class="setting-label">Show value score</span><div class="toggle on" id="t-val" onclick="tog('val')"></div></div>
-          <div class="setting-row"><span class="setting-label">Color by projection tier</span><div class="toggle on" id="t-color" onclick="tog('color')"></div></div>
-          <div class="setting-row"><span class="setting-label">Highlight PK players</span><div class="toggle on" id="t-pkhl" onclick="tog('pkhl')"></div></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Slate Info</div>
-          <div class="setting-row"><span class="setting-label">Slate name</span><input class="setting-input" type="text" value="SCF Game 3" style="width:120px;text-align:left;"></div>
-          <div class="setting-row"><span class="setting-label">Game time (ET)</span><input class="setting-input" type="text" value="8:00 PM" style="width:120px;text-align:left;"></div>
-          <div class="setting-row"><span class="setting-label">Contest type</span><input class="setting-input" type="text" value="Showdown" style="width:120px;text-align:left;"></div>
-          <div class="setting-row"><span class="setting-label">DK cap</span><input class="setting-input" type="number" value="50000"></div>
-        </div>
-      </div>
-    </div>
 
     <!-- ABOUT -->
     <div id="tab-about" class="tab">
@@ -516,23 +431,13 @@ textarea::placeholder { color: var(--ink-light); }
                 <div class="pch-sub">Jan 2026 — Present · DraftKings</div>
               </div>
               <div class="perf-card-body">
-                <div class="perf-bars">
-                  <div class="pb-row">
-                    <div class="pb-labels"><span class="pb-name">Spent</span><span class="pb-val spent">$46,714</span></div>
-                    <div class="pb-track"><div class="pb-fill spent" style="width:66%"></div></div>
-                  </div>
-                  <div class="pb-row">
-                    <div class="pb-labels"><span class="pb-name">Won</span><span class="pb-val won">$70,572</span></div>
-                    <div class="pb-track"><div class="pb-fill won" style="width:100%"></div></div>
-                  </div>
-                </div>
                 <div class="net-box">
-                  <div class="net-label">Net Total</div>
+                  <div class="net-label">2026 Profit</div>
                   <div class="net-val">+$23,858</div>
                   <div class="net-sub">51% ROI · 2026 season</div>
                 </div>
-                <div class="lifetime-box">
-                  <div class="lt-label">Lifetime Net</div>
+                <div class="lifetime-box" style="margin-top:14px;">
+                  <div class="lt-label">Lifetime Profit</div>
                   <div class="lt-val">+$40,000<span style="font-size:12px;color:var(--ink-light);font-family:var(--mono);font-weight:400;margin-left:4px;">approx</span></div>
                   <div class="lt-sub">4 years · consistent positive returns</div>
                 </div>
@@ -575,133 +480,298 @@ const TEAM_DEF = {
   CAR: 46.2,  // elite defense
 };
 
-/* ── Player data with NST individual stats ─────────────────────────────── */
-// L5/L10 stats: goals, a1 (primary), a2 (secondary), sog, blocks, hdc per window
-// oppCA: opponent's Corsi Against % (their defense strength — lower = tougher)
+/* ── Player data from EdgeWork sheet ────────────────────────────────────
+   fpavg  = Season DK/game estimate
+   l5.dk  = Last 5 DK/game estimate  (used directly, no formula needed)
+   l10.dk = Last 10 DK/game estimate
+   NST stats still used for shot/block bonus detection
+── */
 const PLAYERS = [
-  { name:'Shea Theodore',      pos:'D', team:'VGK', opp:'CAR', line:1, salary:7200,  fpavg:9.7,  pp:'PP1', pk:false,
-    l5:{ g:1, a1:2, a2:1, sog:10, blk:3, hdc:4, gp:5 },
-    l10:{ g:2, a1:4, a2:2, sog:22, blk:7, hdc:9, gp:10 } },
+  // ── CAR Line 1 ───────────────────────────────────────────────────────
+  { name:'Andrei Svechnikov',  pos:'W', team:'CAR', opp:'VGK', line:1, salary:7600,  fpavg:9.3,  pp:'PP1', pk:false,
+    l5:{ g:1, a1:1, a2:0, sog:9,  blk:2, hdc:5, gp:5, dk:7.82  },
+    l10:{ g:2, a1:2, a2:0, sog:11, blk:2, hdc:9, gp:5, dk:10.77 } },
 
-  { name:'Jack Eichel',        pos:'C', team:'VGK', opp:'CAR', line:1, salary:10400, fpavg:13.6, pp:'PP1', pk:false,
-    l5:{ g:2, a1:3, a2:1, sog:18, blk:2, hdc:8, gp:5 },
-    l10:{ g:3, a1:5, a2:3, sog:33, blk:4, hdc:15, gp:10 } },
+  { name:'Jalen Chatfield',    pos:'D', team:'CAR', opp:'VGK', line:1, salary:3800,  fpavg:4.9,  pp:'',    pk:false,
+    l5:{ g:0, a1:3, a2:2, sog:7,  blk:4, hdc:0, gp:5, dk:12.52 },
+    l10:{ g:0, a1:3, a2:2, sog:8,  blk:4, hdc:1, gp:5, dk:12.98 } },
 
-  { name:'Brayden McNabb',     pos:'D', team:'VGK', opp:'CAR', line:1, salary:4400,  fpavg:7.0,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:2, sog:8,  blk:14, hdc:2, gp:5 },
-    l10:{ g:1, a1:2, a2:3, sog:14, blk:26, hdc:4, gp:10 } },
+  { name:'Sebastian Aho',      pos:'C', team:'CAR', opp:'VGK', line:1, salary:9000,  fpavg:11.3, pp:'PP1', pk:true,
+    l5:{ g:0, a1:2, a2:2, sog:5,  blk:1, hdc:3, gp:5, dk:5.78  },
+    l10:{ g:1, a1:4, a2:2, sog:10, blk:2, hdc:4, gp:5, dk:10.99 } },
 
-  { name:'Pavel Dorofeyev',    pos:'W', team:'VGK', opp:'CAR', line:1, salary:8400,  fpavg:10.5, pp:'PP1', pk:false,
-    l5:{ g:1, a1:1, a2:2, sog:14, blk:2, hdc:7, gp:5 },
-    l10:{ g:3, a1:2, a2:3, sog:26, blk:3, hdc:12, gp:10 } },
+  { name:'Jordan Martinook',   pos:'W', team:'CAR', opp:'VGK', line:1, salary:3400,  fpavg:6.1,  pp:'',    pk:true,
+    l5:{ g:1, a1:0, a2:0, sog:12, blk:2, hdc:9, gp:5, dk:11.60 },
+    l10:{ g:1, a1:0, a2:0, sog:13, blk:2, hdc:9, gp:5, dk:10.97 } },
 
-  { name:'Ivan Barbashev',     pos:'W', team:'VGK', opp:'CAR', line:1, salary:5600,  fpavg:7.5,  pp:'PP1', pk:true,
-    l5:{ g:2, a1:1, a2:1, sog:12, blk:4, hdc:5, gp:5 },
-    l10:{ g:3, a1:3, a2:2, sog:22, blk:8, hdc:10, gp:10 } },
+  { name:'Jaccob Slavin',      pos:'D', team:'CAR', opp:'VGK', line:1, salary:3600,  fpavg:7.5,  pp:'PP1', pk:true,
+    l5:{ g:0, a1:2, a2:2, sog:2,  blk:5, hdc:1, gp:5, dk:8.18  },
+    l10:{ g:0, a1:2, a2:2, sog:2,  blk:6, hdc:1, gp:5, dk:8.61  } },
 
-  { name:'Brett Howden',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:6000,  fpavg:6.8,  pp:'PP2', pk:false,
-    l5:{ g:3, a1:4, a2:1, sog:20, blk:5, hdc:8, gp:5 },
-    l10:{ g:4, a1:6, a2:2, sog:34, blk:9, hdc:14, gp:10 } },
-
-  { name:'William Karlsson',   pos:'C', team:'VGK', opp:'CAR', line:2, salary:5400,  fpavg:7.7,  pp:'PP2', pk:true,
-    l5:{ g:2, a1:2, a2:1, sog:13, blk:3, hdc:5, gp:5 },
-    l10:{ g:3, a1:3, a2:3, sog:24, blk:6, hdc:9, gp:10 } },
-
-  { name:'Mitch Marner',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:9400,  fpavg:11.6, pp:'PP2', pk:false,
-    l5:{ g:1, a1:4, a2:2, sog:16, blk:1, hdc:7, gp:5 },
-    l10:{ g:2, a1:7, a2:4, sog:29, blk:2, hdc:13, gp:10 } },
-
-  { name:'Noah Hanifin',       pos:'D', team:'VGK', opp:'CAR', line:2, salary:4200,  fpavg:8.2,  pp:'PP2', pk:true,
-    l5:{ g:0, a1:1, a2:2, sog:7,  blk:10, hdc:2, gp:5 },
-    l10:{ g:1, a1:2, a2:3, sog:13, blk:18, hdc:4, gp:10 } },
-
-  { name:'Rasmus Andersson',   pos:'D', team:'VGK', opp:'CAR', line:2, salary:5800,  fpavg:10.2, pp:'PP2', pk:false,
-    l5:{ g:0, a1:0, a2:2, sog:6,  blk:8,  hdc:2, gp:5 },
-    l10:{ g:1, a1:1, a2:3, sog:12, blk:15, hdc:4, gp:10 } },
-
-  { name:'Mark Stone',         pos:'W', team:'VGK', opp:'CAR', line:3, salary:7600,  fpavg:10.4, pp:'PP1', pk:false,
-    l5:{ g:1, a1:2, a2:1, sog:11, blk:3, hdc:5, gp:5 },
-    l10:{ g:2, a1:4, a2:2, sog:20, blk:5, hdc:10, gp:10 } },
-
-  { name:'Tomas Hertl',        pos:'W', team:'VGK', opp:'CAR', line:3, salary:6400,  fpavg:10.7, pp:'',    pk:false,
-    l5:{ g:1, a1:1, a2:2, sog:12, blk:2, hdc:5, gp:5 },
-    l10:{ g:2, a1:3, a2:3, sog:21, blk:4, hdc:9, gp:10 } },
-
-  { name:'Colton Sissons',     pos:'C', team:'VGK', opp:'CAR', line:3, salary:3000,  fpavg:5.0,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:1, sog:6,  blk:6, hdc:2, gp:5 },
-    l10:{ g:1, a1:1, a2:2, sog:11, blk:11, hdc:4, gp:10 } },
-
-  { name:'Nic Dowd',           pos:'C', team:'VGK', opp:'CAR', line:4, salary:2400,  fpavg:5.6,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:1, sog:5,  blk:5, hdc:1, gp:5 },
-    l10:{ g:1, a1:1, a2:1, sog:9,  blk:9, hdc:3, gp:10 } },
-
-  { name:'William Carrier',    pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:3.5,  pp:'',    pk:false,
-    l5:{ g:0, a1:0, a2:1, sog:4,  blk:3, hdc:1, gp:5 },
-    l10:{ g:0, a1:0, a2:1, sog:7,  blk:6, hdc:2, gp:10 } },
-
-  { name:'Seth Jarvis',        pos:'W', team:'CAR', opp:'VGK', line:1, salary:9800,  fpavg:12.1, pp:'PP1', pk:false,
-    l5:{ g:1, a1:2, a2:1, sog:11, blk:2, hdc:6, gp:5 },
-    l10:{ g:3, a1:4, a2:2, sog:22, blk:3, hdc:12, gp:10 } },
-
-  { name:'Andrei Svechnikov',  pos:'W', team:'CAR', opp:'VGK', line:1, salary:8200,  fpavg:9.3,  pp:'PP1', pk:false,
-    l5:{ g:0, a1:1, a2:2, sog:13, blk:2, hdc:7, gp:5 },
-    l10:{ g:2, a1:3, a2:3, sog:26, blk:4, hdc:14, gp:10 } },
-
-  { name:'Sebastian Aho',      pos:'C', team:'CAR', opp:'VGK', line:1, salary:9200,  fpavg:11.3, pp:'PP1', pk:true,
-    l5:{ g:0, a1:0, a2:1, sog:8,  blk:1, hdc:4, gp:5 },
-    l10:{ g:1, a1:2, a2:2, sog:18, blk:2, hdc:9, gp:10 } },
-
-  { name:'Jaccob Slavin',      pos:'D', team:'CAR', opp:'VGK', line:1, salary:4800,  fpavg:7.5,  pp:'PP1', pk:true,
-    l5:{ g:0, a1:2, a2:1, sog:7,  blk:12, hdc:2, gp:5 },
-    l10:{ g:1, a1:3, a2:2, sog:13, blk:22, hdc:4, gp:10 } },
-
-  { name:'Jalen Chatfield',    pos:'D', team:'CAR', opp:'VGK', line:1, salary:3400,  fpavg:4.9,  pp:'',    pk:false,
-    l5:{ g:2, a1:2, a2:1, sog:9,  blk:8, hdc:3, gp:5 },
-    l10:{ g:2, a1:3, a2:2, sog:16, blk:14, hdc:5, gp:10 } },
-
-  { name:'Taylor Hall',        pos:'W', team:'CAR', opp:'VGK', line:2, salary:6800,  fpavg:7.1,  pp:'PP2', pk:false,
-    l5:{ g:2, a1:3, a2:1, sog:18, blk:1, hdc:8, gp:5 },
-    l10:{ g:3, a1:4, a2:2, sog:31, blk:2, hdc:14, gp:10 } },
+  // ── CAR Line 2 ───────────────────────────────────────────────────────
+  { name:'Taylor Hall',        pos:'W', team:'CAR', opp:'VGK', line:2, salary:7200,  fpavg:7.1,  pp:'PP2', pk:false,
+    l5:{ g:2, a1:2, a2:2, sog:13, blk:1, hdc:7, gp:5, dk:12.88 },
+    l10:{ g:2, a1:2, a2:2, sog:14, blk:1, hdc:10, gp:5, dk:12.23 } },
 
   { name:'Logan Stankoven',    pos:'C', team:'CAR', opp:'VGK', line:2, salary:8800,  fpavg:7.7,  pp:'PP2', pk:false,
-    l5:{ g:2, a1:2, a2:2, sog:14, blk:2, hdc:6, gp:5 },
-    l10:{ g:3, a1:3, a2:3, sog:25, blk:3, hdc:11, gp:10 } },
+    l5:{ g:3, a1:3, a2:1, sog:14, blk:2, hdc:7, gp:5, dk:14.80 },
+    l10:{ g:3, a1:3, a2:1, sog:15, blk:2, hdc:8, gp:5, dk:14.05 } },
 
-  { name:'Jackson Blake',      pos:'W', team:'CAR', opp:'VGK', line:2, salary:7000,  fpavg:6.2,  pp:'PP2', pk:false,
-    l5:{ g:2, a1:2, a2:2, sog:15, blk:1, hdc:7, gp:5 },
-    l10:{ g:3, a1:3, a2:3, sog:26, blk:2, hdc:12, gp:10 } },
+  { name:'Jackson Blake',      pos:'W', team:'CAR', opp:'VGK', line:2, salary:6800,  fpavg:6.2,  pp:'PP2', pk:false,
+    l5:{ g:1, a1:3, a2:1, sog:10, blk:1, hdc:10, gp:5, dk:11.98 },
+    l10:{ g:1, a1:3, a2:1, sog:10, blk:1, hdc:10, gp:5, dk:10.28 } },
 
-  { name:"K'Andre Miller",     pos:'D', team:'CAR', opp:'VGK', line:2, salary:5000,  fpavg:7.0,  pp:'PP2', pk:false,
-    l5:{ g:1, a1:2, a2:1, sog:8,  blk:9, hdc:3, gp:5 },
-    l10:{ g:1, a1:3, a2:2, sog:15, blk:17, hdc:5, gp:10 } },
+  { name:"K'Andre Miller",     pos:'D', team:'CAR', opp:'VGK', line:2, salary:4000,  fpavg:7.0,  pp:'PP2', pk:false,
+    l5:{ g:0, a1:2, a2:2, sog:4,  blk:7, hdc:1, gp:5, dk:7.56  },
+    l10:{ g:0, a1:2, a2:2, sog:5,  blk:10, hdc:1, gp:5, dk:8.08  } },
 
-  { name:'Sean Walker',        pos:'D', team:'CAR', opp:'VGK', line:2, salary:3600,  fpavg:5.7,  pp:'',    pk:false,
-    l5:{ g:0, a1:1, a2:1, sog:5,  blk:7, hdc:1, gp:5 },
-    l10:{ g:0, a1:1, a2:2, sog:9,  blk:13, hdc:2, gp:10 } },
+  { name:'Sean Walker',        pos:'D', team:'CAR', opp:'VGK', line:2, salary:4800,  fpavg:5.7,  pp:'',    pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:6,  blk:7, hdc:0, gp:5, dk:4.06  },
+    l10:{ g:0, a1:0, a2:0, sog:7,  blk:7, hdc:0, gp:5, dk:4.68  } },
 
-  { name:'Nikolaj Ehlers',     pos:'W', team:'CAR', opp:'VGK', line:3, salary:8000,  fpavg:11.4, pp:'PP1', pk:false,
-    l5:{ g:3, a1:3, a2:1, sog:20, blk:1, hdc:9, gp:5 },
-    l10:{ g:4, a1:5, a2:2, sog:36, blk:2, hdc:16, gp:10 } },
+  // ── CAR Line 3 ───────────────────────────────────────────────────────
+  { name:'Jordan Staal',       pos:'C', team:'CAR', opp:'VGK', line:3, salary:4600,  fpavg:5.6,  pp:'PP1', pk:true,
+    l5:{ g:3, a1:0, a2:0, sog:8,  blk:6, hdc:3, gp:5, dk:11.84 },
+    l10:{ g:4, a1:1, a2:1, sog:13, blk:6, hdc:7, gp:5, dk:16.15 } },
+
+  { name:'Seth Jarvis',        pos:'W', team:'CAR', opp:'VGK', line:3, salary:9800,  fpavg:12.1, pp:'PP1', pk:false,
+    l5:{ g:1, a1:1, a2:1, sog:8,  blk:2, hdc:4, gp:5, dk:9.18  },
+    l10:{ g:2, a1:2, a2:2, sog:11, blk:1, hdc:4, gp:5, dk:12.34 } },
+
+  { name:'Nikolaj Ehlers',     pos:'W', team:'CAR', opp:'VGK', line:3, salary:8000,  fpavg:11.4, pp:'PP2', pk:false,
+    l5:{ g:2, a1:1, a2:0, sog:10, blk:1, hdc:3, gp:5, dk:9.82  },
+    l10:{ g:2, a1:3, a2:1, sog:11, blk:1, hdc:3, gp:5, dk:11.22 } },
 
   { name:'Shayne Gostisbehere',pos:'D', team:'CAR', opp:'VGK', line:3, salary:6600,  fpavg:7.8,  pp:'PP1', pk:false,
-    l5:{ g:1, a1:3, a2:2, sog:9,  blk:5, hdc:3, gp:5 },
-    l10:{ g:1, a1:5, a2:3, sog:17, blk:9, hdc:6, gp:10 } },
+    l5:{ g:1, a1:1, a2:0, sog:3,  blk:2, hdc:0, gp:5, dk:5.46  },
+    l10:{ g:2, a1:4, a2:2, sog:5,  blk:2, hdc:1, gp:5, dk:10.81 } },
+
+  { name:'Alexander Nikishin', pos:'D', team:'CAR', opp:'VGK', line:3, salary:3200,  fpavg:3.0,  pp:'PP2', pk:false,
+    l5:{ g:0, a1:1, a2:0, sog:4,  blk:6, hdc:0, gp:5, dk:2.70  },
+    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0, gp:5, dk:3.20  } },
+
+  // ── CAR Line 4 ───────────────────────────────────────────────────────
+  { name:'Eric Robinson',      pos:'W', team:'CAR', opp:'VGK', line:4, salary:2600,  fpavg:4.8,  pp:'',    pk:false,
+    l5:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5, dk:8.16  },
+    l10:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5, dk:7.71  } },
+
+  { name:'Mark Jankowski',     pos:'C', team:'CAR', opp:'VGK', line:4, salary:2200,  fpavg:4.4,  pp:'',    pk:false,
+    l5:{ g:1, a1:0, a2:0, sog:7,  blk:4, hdc:3, gp:5, dk:6.74  },
+    l10:{ g:1, a1:0, a2:0, sog:7,  blk:4, hdc:3, gp:5, dk:6.09  } },
+
+  { name:'William Carrier',    pos:'W', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:3.5,  pp:'',    pk:false,
+    l5:{ g:0, a1:2, a2:2, sog:6,  blk:1, hdc:2, gp:5, dk:4.96  },
+    l10:{ g:0, a1:2, a2:2, sog:6,  blk:1, hdc:2, gp:5, dk:4.51  } },
+
+  // ── VGK Line 1 ───────────────────────────────────────────────────────
+  { name:'Shea Theodore',      pos:'D', team:'VGK', opp:'CAR', line:1, salary:7800,  fpavg:9.7,  pp:'PP1', pk:false,
+    l5:{ g:2, a1:5, a2:1, sog:4,  blk:7, hdc:0, gp:5, dk:14.82 },
+    l10:{ g:2, a1:5, a2:1, sog:6,  blk:7, hdc:0, gp:5, dk:14.72 } },
+
+  { name:'Jack Eichel',        pos:'C', team:'VGK', opp:'CAR', line:1, salary:10600, fpavg:13.6, pp:'PP1', pk:false,
+    l5:{ g:0, a1:1, a2:1, sog:2,  blk:0, hdc:0, gp:5, dk:6.90  },
+    l10:{ g:0, a1:2, a2:2, sog:6,  blk:0, hdc:0, gp:5, dk:8.86  } },
+
+  { name:'Mark Stone',         pos:'W', team:'VGK', opp:'CAR', line:1, salary:7400,  fpavg:10.4, pp:'PP1', pk:false,
+    l5:{ g:2, a1:1, a2:1, sog:7,  blk:3, hdc:2, gp:5, dk:9.82  },
+    l10:{ g:3, a1:1, a2:1, sog:11, blk:3, hdc:8, gp:5, dk:13.02 } },
+
+  { name:'Ivan Barbashev',     pos:'W', team:'VGK', opp:'CAR', line:1, salary:5800,  fpavg:7.5,  pp:'PP2', pk:true,
+    l5:{ g:1, a1:1, a2:1, sog:10, blk:0, hdc:7, gp:5, dk:9.66  },
+    l10:{ g:1, a1:1, a2:1, sog:10, blk:0, hdc:7, gp:5, dk:8.46  } },
+
+  { name:'Brayden McNabb',     pos:'D', team:'VGK', opp:'CAR', line:1, salary:4400,  fpavg:7.0,  pp:'',    pk:true,
+    l5:{ g:0, a1:6, a2:4, sog:1,  blk:2, hdc:0, gp:5, dk:12.48 },
+    l10:{ g:0, a1:6, a2:4, sog:1,  blk:0, hdc:0, gp:5, dk:12.43 } },
+
+  // ── VGK Line 2 ───────────────────────────────────────────────────────
+  { name:'Mitch Marner',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:10000, fpavg:11.6, pp:'PP1', pk:false,
+    l5:{ g:3, a1:4, a2:4, sog:7,  blk:0, hdc:6, gp:5, dk:22.94 },
+    l10:{ g:3, a1:6, a2:5, sog:9,  blk:0, hdc:8, gp:5, dk:25.20 } },
+
+  { name:'Brett Howden',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:6400,  fpavg:6.8,  pp:'PP2', pk:false,
+    l5:{ g:4, a1:2, a2:0, sog:11, blk:5, hdc:9, gp:5, dk:23.34 },
+    l10:{ g:4, a1:2, a2:0, sog:11, blk:5, hdc:9, gp:5, dk:22.10 } },
+
+  { name:'William Karlsson',   pos:'C', team:'VGK', opp:'CAR', line:2, salary:5000,  fpavg:7.7,  pp:'PP2', pk:true,
+    l5:{ g:2, a1:2, a2:2, sog:4,  blk:0, hdc:1, gp:5, dk:12.34 },
+    l10:{ g:2, a1:2, a2:2, sog:4,  blk:1, hdc:1, gp:5, dk:11.71 } },
+
+  { name:'Noah Hanifin',       pos:'D', team:'VGK', opp:'CAR', line:2, salary:4200,  fpavg:8.2,  pp:'PP2', pk:true,
+    l5:{ g:0, a1:1, a2:0, sog:5,  blk:0, hdc:0, gp:5, dk:7.38  },
+    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0, gp:5, dk:7.84  } },
+
+  { name:'Rasmus Andersson',   pos:'D', team:'VGK', opp:'CAR', line:2, salary:5400,  fpavg:10.2, pp:'PP2', pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:7,  blk:0, hdc:0, gp:5, dk:5.42  },
+    l10:{ g:0, a1:0, a2:0, sog:8,  blk:0, hdc:0, gp:5, dk:6.14  } },
+
+  // ── VGK Line 3 ───────────────────────────────────────────────────────
+  { name:'Tomas Hertl',        pos:'W', team:'VGK', opp:'CAR', line:3, salary:6000,  fpavg:10.7, pp:'PP2', pk:false,
+    l5:{ g:2, a1:2, a2:1, sog:6,  blk:2, hdc:1, gp:5, dk:8.32  },
+    l10:{ g:3, a1:3, a2:1, sog:10, blk:2, hdc:6, gp:5, dk:12.82 } },
+
+  { name:'Pavel Dorofeyev',    pos:'W', team:'VGK', opp:'CAR', line:3, salary:8400,  fpavg:10.5, pp:'PP1', pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:5,  blk:0, hdc:3, gp:5, dk:4.08  },
+    l10:{ g:0, a1:0, a2:0, sog:10, blk:0, hdc:4, gp:5, dk:5.03  } },
+
+  { name:'Dylan Coghlan',      pos:'D', team:'VGK', opp:'CAR', line:3, salary:2000,  fpavg:3.8,  pp:'',    pk:false,
+    l5:{ g:0, a1:2, a2:2, sog:5,  blk:2, hdc:1, gp:5, dk:5.82  },
+    l10:{ g:0, a1:2, a2:2, sog:5,  blk:1, hdc:1, gp:5, dk:5.57  } },
+
+  { name:'Jeremy Lauzon',      pos:'D', team:'VGK', opp:'CAR', line:3, salary:2800,  fpavg:3.5,  pp:'',    pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:0,  blk:0, hdc:0, gp:3, dk:5.20  },
+    l10:{ g:0, a1:0, a2:0, sog:0,  blk:0, hdc:0, gp:3, dk:7.37  } },
+
+  { name:'Colton Sissons',     pos:'C', team:'VGK', opp:'CAR', line:3, salary:3000,  fpavg:5.0,  pp:'',    pk:true,
+    l5:{ g:0, a1:1, a2:1, sog:4,  blk:3, hdc:0, gp:5, dk:5.22  },
+    l10:{ g:0, a1:1, a2:1, sog:5,  blk:4, hdc:0, gp:5, dk:5.48  } },
+
+  // ── VGK Line 4 ───────────────────────────────────────────────────────
+  { name:'Nic Dowd',           pos:'C', team:'VGK', opp:'CAR', line:4, salary:2400,  fpavg:5.6,  pp:'',    pk:true,
+    l5:{ g:0, a1:1, a2:0, sog:5,  blk:4, hdc:1, gp:5, dk:6.02  },
+    l10:{ g:0, a1:1, a2:0, sog:5,  blk:5, hdc:1, gp:5, dk:5.73  } },
+
+  { name:'Keegan Kolesar',     pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:4.5,  pp:'',    pk:false,
+    l5:{ g:1, a1:0, a2:0, sog:3,  blk:2, hdc:3, gp:5, dk:5.30  },
+    l10:{ g:1, a1:0, a2:0, sog:3,  blk:2, hdc:3, gp:5, dk:4.75  } },
+];
+  // ── VGK ─────────────────────────────────────────────────────────────
+  { name:'Shea Theodore',      pos:'D', team:'VGK', opp:'CAR', line:1, salary:7200,  fpavg:9.7,  pp:'PP1', pk:false,
+    l5:{ g:2, a1:5, a2:1, sog:4,  blk:7,  hdc:0, gp:5 },
+    l10:{ g:2, a1:5, a2:1, sog:6,  blk:7,  hdc:0, gp:5 } },
+
+  { name:'Jack Eichel',        pos:'C', team:'VGK', opp:'CAR', line:1, salary:10400, fpavg:13.6, pp:'PP1', pk:false,
+    l5:{ g:0, a1:1, a2:1, sog:2,  blk:0,  hdc:0, gp:5 },
+    l10:{ g:0, a1:2, a2:2, sog:6,  blk:0,  hdc:0, gp:5 } },
+
+  { name:'Brayden McNabb',     pos:'D', team:'VGK', opp:'CAR', line:1, salary:4400,  fpavg:7.0,  pp:'',    pk:true,
+    l5:{ g:0, a1:6, a2:4, sog:1,  blk:2,  hdc:0, gp:5 },
+    l10:{ g:0, a1:6, a2:4, sog:1,  blk:0,  hdc:0, gp:5 } },
+
+  { name:'Mitch Marner',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:9400,  fpavg:11.6, pp:'PP2', pk:false,
+    l5:{ g:3, a1:4, a2:4, sog:7,  blk:0,  hdc:6, gp:5 },
+    l10:{ g:3, a1:6, a2:5, sog:9,  blk:0,  hdc:8, gp:5 } },
+
+  { name:'Brett Howden',       pos:'C', team:'VGK', opp:'CAR', line:2, salary:6000,  fpavg:6.8,  pp:'PP2', pk:false,
+    l5:{ g:4, a1:2, a2:0, sog:11, blk:5,  hdc:9, gp:5 },
+    l10:{ g:4, a1:2, a2:0, sog:11, blk:5,  hdc:9, gp:5 } },
+
+  { name:'William Karlsson',   pos:'C', team:'VGK', opp:'CAR', line:2, salary:5400,  fpavg:7.7,  pp:'PP2', pk:true,
+    l5:{ g:2, a1:2, a2:2, sog:4,  blk:0,  hdc:1, gp:5 },
+    l10:{ g:2, a1:2, a2:2, sog:4,  blk:1,  hdc:1, gp:5 } },
+
+  { name:'Ivan Barbashev',     pos:'W', team:'VGK', opp:'CAR', line:1, salary:5600,  fpavg:7.5,  pp:'PP1', pk:true,
+    l5:{ g:1, a1:1, a2:1, sog:10, blk:0,  hdc:7, gp:5 },
+    l10:{ g:1, a1:1, a2:1, sog:10, blk:0,  hdc:7, gp:5 } },
+
+  { name:'Pavel Dorofeyev',    pos:'W', team:'VGK', opp:'CAR', line:1, salary:8400,  fpavg:10.5, pp:'PP1', pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:5,  blk:0,  hdc:3, gp:5 },
+    l10:{ g:0, a1:0, a2:0, sog:10, blk:0,  hdc:4, gp:5 } },
+
+  { name:'Mark Stone',         pos:'W', team:'VGK', opp:'CAR', line:3, salary:7600,  fpavg:10.4, pp:'PP1', pk:false,
+    l5:{ g:2, a1:1, a2:1, sog:7,  blk:3,  hdc:2, gp:5 },
+    l10:{ g:3, a1:1, a2:1, sog:11, blk:3,  hdc:8, gp:5 } },
+
+  { name:'Tomas Hertl',        pos:'C', team:'VGK', opp:'CAR', line:3, salary:6400,  fpavg:10.7, pp:'',    pk:false,
+    l5:{ g:2, a1:2, a2:1, sog:6,  blk:2,  hdc:1, gp:5 },
+    l10:{ g:3, a1:3, a2:1, sog:10, blk:2,  hdc:6, gp:5 } },
+
+  { name:'Noah Hanifin',       pos:'D', team:'VGK', opp:'CAR', line:2, salary:4200,  fpavg:8.2,  pp:'PP2', pk:true,
+    l5:{ g:0, a1:1, a2:0, sog:5,  blk:0,  hdc:0, gp:5 },
+    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0,  hdc:0, gp:5 } },
+
+  { name:'Rasmus Andersson',   pos:'D', team:'VGK', opp:'CAR', line:2, salary:5800,  fpavg:10.2, pp:'PP2', pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:7,  blk:0,  hdc:0, gp:5 },
+    l10:{ g:0, a1:0, a2:0, sog:8,  blk:0,  hdc:0, gp:5 } },
+
+  { name:'Dylan Coghlan',      pos:'D', team:'VGK', opp:'CAR', line:3, salary:2200,  fpavg:3.8,  pp:'',    pk:false,
+    l5:{ g:0, a1:2, a2:2, sog:5,  blk:2,  hdc:1, gp:5 },
+    l10:{ g:0, a1:2, a2:2, sog:5,  blk:1,  hdc:1, gp:5 } },
+
+  { name:'Colton Sissons',     pos:'C', team:'VGK', opp:'CAR', line:3, salary:3000,  fpavg:5.0,  pp:'',    pk:true,
+    l5:{ g:0, a1:1, a2:1, sog:4,  blk:3,  hdc:0, gp:5 },
+    l10:{ g:0, a1:1, a2:1, sog:5,  blk:4,  hdc:0, gp:5 } },
+
+  { name:'Nic Dowd',           pos:'C', team:'VGK', opp:'CAR', line:4, salary:2400,  fpavg:5.6,  pp:'',    pk:true,
+    l5:{ g:0, a1:1, a2:0, sog:5,  blk:4,  hdc:1, gp:5 },
+    l10:{ g:0, a1:1, a2:0, sog:5,  blk:5,  hdc:1, gp:5 } },
+
+  { name:'Keegan Kolesar',     pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:4.5,  pp:'',    pk:false,
+    l5:{ g:1, a1:0, a2:0, sog:3,  blk:2,  hdc:3, gp:5 },
+    l10:{ g:1, a1:0, a2:0, sog:3,  blk:2,  hdc:3, gp:5 } },
+
+  // ── CAR ─────────────────────────────────────────────────────────────
+  { name:'Seth Jarvis',        pos:'W', team:'CAR', opp:'VGK', line:1, salary:9800,  fpavg:12.1, pp:'PP1', pk:false,
+    l5:{ g:1, a1:1, a2:1, sog:8,  blk:2,  hdc:4, gp:5 },
+    l10:{ g:2, a1:2, a2:2, sog:11, blk:1,  hdc:4, gp:5 } },
+
+  { name:'Andrei Svechnikov',  pos:'W', team:'CAR', opp:'VGK', line:1, salary:8200,  fpavg:9.3,  pp:'PP1', pk:false,
+    l5:{ g:1, a1:1, a2:0, sog:9,  blk:2,  hdc:5, gp:5 },
+    l10:{ g:2, a1:2, a2:0, sog:11, blk:2,  hdc:9, gp:5 } },
+
+  { name:'Sebastian Aho',      pos:'C', team:'CAR', opp:'VGK', line:1, salary:9200,  fpavg:11.3, pp:'PP1', pk:true,
+    l5:{ g:0, a1:2, a2:2, sog:5,  blk:1,  hdc:3, gp:5 },
+    l10:{ g:1, a1:4, a2:2, sog:10, blk:2,  hdc:4, gp:5 } },
+
+  { name:'Jaccob Slavin',      pos:'D', team:'CAR', opp:'VGK', line:1, salary:4800,  fpavg:7.5,  pp:'PP1', pk:true,
+    l5:{ g:0, a1:2, a2:2, sog:2,  blk:5,  hdc:1, gp:5 },
+    l10:{ g:0, a1:2, a2:2, sog:2,  blk:6,  hdc:1, gp:5 } },
+
+  { name:'Jalen Chatfield',    pos:'D', team:'CAR', opp:'VGK', line:1, salary:3400,  fpavg:4.9,  pp:'',    pk:false,
+    l5:{ g:0, a1:3, a2:2, sog:7,  blk:4,  hdc:0, gp:5 },
+    l10:{ g:0, a1:3, a2:2, sog:8,  blk:4,  hdc:1, gp:5 } },
+
+  { name:'Nikolaj Ehlers',     pos:'W', team:'CAR', opp:'VGK', line:3, salary:8000,  fpavg:11.4, pp:'PP1', pk:false,
+    l5:{ g:2, a1:1, a2:0, sog:10, blk:1,  hdc:3, gp:5 },
+    l10:{ g:2, a1:3, a2:1, sog:11, blk:1,  hdc:3, gp:5 } },
+
+  { name:'Shayne Gostisbehere',pos:'D', team:'CAR', opp:'VGK', line:3, salary:6600,  fpavg:7.8,  pp:'PP1', pk:false,
+    l5:{ g:1, a1:1, a2:0, sog:3,  blk:2,  hdc:0, gp:5 },
+    l10:{ g:2, a1:4, a2:2, sog:5,  blk:2,  hdc:1, gp:5 } },
+
+  { name:'Taylor Hall',        pos:'W', team:'CAR', opp:'VGK', line:2, salary:6800,  fpavg:7.1,  pp:'PP2', pk:false,
+    l5:{ g:2, a1:2, a2:2, sog:13, blk:1,  hdc:7, gp:5 },
+    l10:{ g:2, a1:2, a2:2, sog:14, blk:1,  hdc:10, gp:5 } },
+
+  { name:'Logan Stankoven',    pos:'C', team:'CAR', opp:'VGK', line:2, salary:8800,  fpavg:7.7,  pp:'PP2', pk:false,
+    l5:{ g:3, a1:3, a2:1, sog:14, blk:2,  hdc:7, gp:5 },
+    l10:{ g:3, a1:3, a2:1, sog:15, blk:2,  hdc:8, gp:5 } },
+
+  { name:'Jackson Blake',      pos:'W', team:'CAR', opp:'VGK', line:2, salary:7000,  fpavg:6.2,  pp:'PP2', pk:false,
+    l5:{ g:1, a1:3, a2:1, sog:10, blk:1,  hdc:10, gp:5 },
+    l10:{ g:1, a1:3, a2:1, sog:10, blk:1,  hdc:10, gp:5 } },
+
+  { name:"K'Andre Miller",     pos:'D', team:'CAR', opp:'VGK', line:2, salary:5000,  fpavg:7.0,  pp:'PP2', pk:false,
+    l5:{ g:0, a1:2, a2:2, sog:4,  blk:7,  hdc:1, gp:5 },
+    l10:{ g:0, a1:2, a2:2, sog:5,  blk:10, hdc:1, gp:5 } },
 
   { name:'Jordan Staal',       pos:'C', team:'CAR', opp:'VGK', line:3, salary:4000,  fpavg:5.6,  pp:'PP1', pk:true,
-    l5:{ g:1, a1:1, a2:1, sog:8,  blk:6, hdc:3, gp:5 },
-    l10:{ g:2, a1:2, a2:2, sog:15, blk:11, hdc:5, gp:10 } },
+    l5:{ g:3, a1:0, a2:0, sog:8,  blk:6,  hdc:3, gp:5 },
+    l10:{ g:4, a1:1, a2:1, sog:13, blk:6,  hdc:7, gp:5 } },
 
   { name:'Jordan Martinook',   pos:'W', team:'CAR', opp:'VGK', line:3, salary:3200,  fpavg:6.1,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:1, sog:7,  blk:4, hdc:2, gp:5 },
-    l10:{ g:1, a1:1, a2:2, sog:13, blk:7, hdc:4, gp:10 } },
+    l5:{ g:1, a1:0, a2:0, sog:12, blk:2,  hdc:9, gp:5 },
+    l10:{ g:1, a1:0, a2:0, sog:13, blk:2,  hdc:9, gp:5 } },
+
+  { name:'Alexander Nikishin', pos:'D', team:'CAR', opp:'VGK', line:3, salary:2800,  fpavg:3.0,  pp:'',    pk:false,
+    l5:{ g:0, a1:1, a2:0, sog:4,  blk:6,  hdc:0, gp:5 },
+    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0,  hdc:0, gp:5 } },
+
+  { name:'Sean Walker',        pos:'D', team:'CAR', opp:'VGK', line:2, salary:3600,  fpavg:5.7,  pp:'',    pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:6,  blk:7,  hdc:0, gp:5 },
+    l10:{ g:0, a1:0, a2:0, sog:7,  blk:7,  hdc:0, gp:5 } },
 
   { name:'Eric Robinson',      pos:'W', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:4.8,  pp:'',    pk:false,
-    l5:{ g:1, a1:1, a2:1, sog:7,  blk:3, hdc:3, gp:5 },
-    l10:{ g:1, a1:1, a2:1, sog:12, blk:5, hdc:5, gp:10 } },
+    l5:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5 },
+    l10:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5 } },
 
   { name:'Mark Jankowski',     pos:'C', team:'CAR', opp:'VGK', line:4, salary:2600,  fpavg:4.4,  pp:'',    pk:false,
-    l5:{ g:1, a1:1, a2:0, sog:6,  blk:4, hdc:2, gp:5 },
-    l10:{ g:1, a1:1, a2:1, sog:10, blk:7, hdc:3, gp:10 } },
+    l5:{ g:1, a1:0, a2:0, sog:7,  blk:4,  hdc:3, gp:5 },
+    l10:{ g:1, a1:0, a2:0, sog:7,  blk:4,  hdc:3, gp:5 } },
+
+  { name:'William Carrier',    pos:'W', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:3.5,  pp:'',    pk:false,
+    l5:{ g:0, a1:2, a2:2, sog:6,  blk:1,  hdc:2, gp:5 },
+    l10:{ g:0, a1:2, a2:2, sog:6,  blk:1,  hdc:2, gp:5 } },
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -743,12 +813,16 @@ function getDefMult(oppTeam) {
 }
 
 // Full projection for a player
+// Uses DK/game estimates from the sheet (L5 and L10)
+// Falls back to calculating from raw NST stats if no dk field
+// Final: L5 × 0.40 + L10 × 0.35 + Season FP avg × 0.25
+// then trend multiplier × opponent defensive adjustment
 function calcProj(p) {
-  const l5dk  = calcDK(p.l5);
-  const l10dk = calcDK(p.l10);
+  const l5dk  = p.l5.dk  !== undefined ? p.l5.dk  : calcDK(p.l5);
+  const l10dk = p.l10.dk !== undefined ? p.l10.dk : calcDK(p.l10);
   const weighted = l5dk * 0.40 + l10dk * 0.35 + p.fpavg * 0.25;
-  const trend = getTrend(l5dk, l10dk, p.fpavg);
-  const defMult = getDefMult(p.opp);
+  const trend    = getTrend(l5dk, l10dk, p.fpavg);
+  const defMult  = getDefMult(p.opp);
   return {
     l5dk,
     l10dk,
