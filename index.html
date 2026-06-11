@@ -270,52 +270,7 @@ textarea::placeholder { color: var(--ink-light); }
 .footer-brand em { color: var(--rink-blue); font-style: normal; }
 .footer-meta { font-family: var(--mono); font-size: 10px; color: var(--ink-light); }
 
-/* ── Player Card Modal ─────────────────────────────────────────────────── */
-.modal-overlay {
-  display: none; position: fixed; inset: 0; z-index: 1000;
-  background: rgba(13,31,60,0.55); backdrop-filter: blur(3px);
-  align-items: center; justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-.player-card {
-  background: var(--ice); border-radius: 6px; width: 100%; max-width: 520px;
-  margin: 20px; box-shadow: 0 8px 32px rgba(13,31,60,0.25);
-  border-top: 3px solid var(--rink-blue); overflow: hidden;
-}
-.pc-head {
-  background: var(--rink-blue); color: white; padding: 16px 18px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.pc-head-left { display: flex; flex-direction: column; gap: 3px; }
-.pc-name { font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: 0.03em; }
-.pc-meta { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 0.08em; }
-.pc-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 3px; }
-.pc-close:hover { color: white; background: rgba(255,255,255,0.1); }
-.pc-body { padding: 16px 18px; }
-.pc-loading { font-family: var(--mono); font-size: 11px; color: var(--ink-light); text-align: center; padding: 24px 0; }
-.pc-table-wrap { overflow-x: auto; }
-.pc-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
-.pc-table th {
-  background: var(--ice-mid); color: var(--ink-light); text-transform: uppercase;
-  letter-spacing: 0.08em; font-size: 9px; padding: 6px 8px; text-align: right;
-  border-bottom: 1px solid var(--border-hi);
-}
-.pc-table th:first-child { text-align: left; }
-.pc-table td { padding: 7px 8px; text-align: right; border-bottom: 1px solid var(--border); color: var(--ink-mid); }
-.pc-table td:first-child { text-align: left; color: var(--ink-light); font-size: 10px; }
-.pc-table tr:last-child td { border-bottom: none; font-weight: 500; color: var(--ink); background: var(--ice-mid); }
-.pc-table .goal { color: var(--green); font-weight: 600; }
-.pc-table .pt-cell { color: var(--rink-blue); font-weight: 600; }
-.pc-dk-row { margin-top: 12px; display: flex; gap: 10px; }
-.pc-dk-box { flex: 1; background: var(--ice-mid); border-radius: 4px; padding: 10px 12px; text-align: center; border: 1px solid var(--border); }
-.pc-dk-label { font-family: var(--mono); font-size: 9px; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-.pc-dk-val { font-family: var(--display); font-size: 20px; font-weight: 800; color: var(--rink-blue); }
-.pc-dk-val.hot { color: var(--green); }
-.pc-error { font-family: var(--mono); font-size: 11px; color: var(--rink-red); text-align: center; padding: 16px 0; }
-
-.player-link { cursor: pointer; color: var(--ink); border-bottom: 1px dashed rgba(26,58,110,0.4); transition: color 0.12s; }
-.player-link:hover { color: var(--rink-blue); border-bottom-color: var(--rink-blue); }
-
+/* Animations */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Responsive */
@@ -330,22 +285,6 @@ textarea::placeholder { color: var(--ink-light); }
 </style>
 </head>
 <body>
-
-<!-- ── Player Card Modal ─────────────────────────────────────────────── -->
-<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
-  <div class="player-card" id="player-card">
-    <div class="pc-head">
-      <div class="pc-head-left">
-        <div class="pc-name" id="pc-name">Player</div>
-        <div class="pc-meta" id="pc-meta">—</div>
-      </div>
-      <button class="pc-close" onclick="closeCard()">✕</button>
-    </div>
-    <div class="pc-body" id="pc-body">
-      <div class="pc-loading">Loading game log...</div>
-    </div>
-  </div>
-</div>
 
 <div class="app">
 
@@ -394,14 +333,14 @@ textarea::placeholder { color: var(--ink-light); }
         <div class="logo-mark">EDGE<em>WORK</em></div>
         <div class="logo-tag">5v5 · Even Strength · All Strength · PK Analysis</div>
       </div>
-      <div class="header-meta" id="header-meta">
+      <div class="header-meta">
         <div class="series-pill">
           <span class="live-dot"></span>
-          <span id="pill-game">Stanley Cup Final · Game 5</span>
-          <span class="series-score" id="pill-score">CAR 2 — VGK 2</span>
+          <span>Stanley Cup Final · Game 4</span>
+          <span class="series-score">VGK 2 — CAR 1</span>
         </div>
-        <div class="series-pill" style="justify-content:flex-end;" id="pill-info">
-          THU JUN 12 · 8:00 PM ET · PNC ARENA, RALEIGH
+        <div class="series-pill" style="justify-content:flex-end;">
+          TUE JUN 10 · 8:00 PM ET · T-MOBILE ARENA, LAS VEGAS
         </div>
       </div>
     </div>
@@ -540,166 +479,15 @@ const TEAM_DEF = {
   CAR: 46.2,  // elite defense
 };
 
-/* ── Player data — Game 5 SCF Tied 2-2 ──────────────────────────────────
-   nhlId  = NHL API player ID (backend only — used for game log fetch)
-            Find at: nhl.com/player/{first-last}-{nhlId}
+/* ── Player data — Game 4 SCF VGK leads 2-1 ─────────────────────────────
    DFF slate: salaries, DK/game estimates (L5, L10, season), PP/line info
    NST L5 ES:  last 5 even strength — pure underlying production
    NST L5 AS:  last 5 all strength  — includes PP/PK opportunity
+   NST season 5v5 + PK: baseline context for over/underperformance
+   l5.dk / l10.dk = DFF DK/game estimates (primary projection inputs)
+   l5 stats = from NST L5 ES (shot/block bonus detection + context)
 ── */
 const PLAYERS = [
-  // ── CAR Line 1 ───────────────────────────────────────────────────────
-  { name:'Andrei Svechnikov',  nhlId:8481533, pos:'W', team:'CAR', opp:'VGK', line:1, salary:7200,  fpavg:9.3,  pp:'PP1', pk:false,
-    l5:{ g:1, a1:2, a2:0, sog:5,  blk:0, hdc:10, gp:5, dk:5.70  },
-    l10:{ g:2, a1:2, a2:0, sog:8,  blk:0, hdc:9,  gp:5, dk:8.80  } },
-
-  { name:'Jalen Chatfield',    nhlId:8481607, pos:'D', team:'CAR', opp:'VGK', line:1, salary:4000,  fpavg:4.9,  pp:'',    pk:false,
-    l5:{ g:0, a1:2, a2:1, sog:7,  blk:13, hdc:0, gp:5, dk:11.10 },
-    l10:{ g:0, a1:2, a2:1, sog:8,  blk:13, hdc:0, gp:5, dk:9.30  } },
-
-  { name:'Sebastian Aho',      nhlId:8478427, pos:'C', team:'CAR', opp:'VGK', line:1, salary:9200,  fpavg:11.3, pp:'PP1', pk:true,
-    l5:{ g:0, a1:2, a2:3, sog:11, blk:0, hdc:4,  gp:5, dk:9.30  },
-    l10:{ g:1, a1:4, a2:2, sog:10, blk:2, hdc:4,  gp:5, dk:8.10  } },
-
-  { name:'Jordan Martinook',   nhlId:8476923, pos:'W', team:'CAR', opp:'VGK', line:1, salary:3400,  fpavg:6.1,  pp:'',    pk:true,
-    l5:{ g:1, a1:0, a2:0, sog:13, blk:1, hdc:7,  gp:5, dk:11.60 },
-    l10:{ g:1, a1:0, a2:0, sog:13, blk:2, hdc:9,  gp:5, dk:4.80  } },
-
-  { name:'Jaccob Slavin',      nhlId:8477436, pos:'D', team:'CAR', opp:'VGK', line:1, salary:3600,  fpavg:7.5,  pp:'PP1', pk:true,
-    l5:{ g:0, a1:2, a2:0, sog:3,  blk:0, hdc:1,  gp:5, dk:5.10  },
-    l10:{ g:0, a1:2, a2:2, sog:2,  blk:6, hdc:1,  gp:5, dk:6.50  } },
-
-  // ── CAR Line 2 ───────────────────────────────────────────────────────
-  { name:'Taylor Hall',        nhlId:8476882, pos:'W', team:'CAR', opp:'VGK', line:2, salary:7400,  fpavg:7.1,  pp:'PP2', pk:false,
-    l5:{ g:2, a1:3, a2:0, sog:14, blk:4, hdc:8,  gp:5, dk:12.20 },
-    l10:{ g:2, a1:2, a2:2, sog:14, blk:1, hdc:10, gp:5, dk:12.00 } },
-
-  { name:'Logan Stankoven',    nhlId:8482669, pos:'C', team:'CAR', opp:'VGK', line:2, salary:8800,  fpavg:7.7,  pp:'PP2', pk:false,
-    l5:{ g:3, a1:3, a2:1, sog:11, blk:0, hdc:5,  gp:5, dk:12.00 },
-    l10:{ g:3, a1:3, a2:1, sog:15, blk:0, hdc:8,  gp:5, dk:10.10 } },
-
-  { name:'Jackson Blake',      nhlId:8483515, pos:'W', team:'CAR', opp:'VGK', line:2, salary:6800,  fpavg:6.2,  pp:'PP2', pk:false,
-    l5:{ g:2, a1:3, a2:0, sog:9,  blk:2, hdc:7,  gp:5, dk:9.60  },
-    l10:{ g:2, a1:3, a2:0, sog:9,  blk:2, hdc:7,  gp:5, dk:11.80 } },
-
-  { name:"K'Andre Miller",     nhlId:8481533, pos:'D', team:'CAR', opp:'VGK', line:2, salary:3000,  fpavg:7.0,  pp:'PP2', pk:false,
-    l5:{ g:0, a1:1, a2:0, sog:4,  blk:4, hdc:1,  gp:5, dk:4.60  },
-    l10:{ g:0, a1:2, a2:2, sog:5,  blk:10, hdc:1, gp:5, dk:7.00  } },
-
-  { name:'Sean Walker',        nhlId:8480785, pos:'D', team:'CAR', opp:'VGK', line:2, salary:4600,  fpavg:5.7,  pp:'',    pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:6,  blk:5, hdc:0,  gp:5, dk:4.20  },
-    l10:{ g:0, a1:0, a2:0, sog:7,  blk:7, hdc:0,  gp:5, dk:5.10  } },
-
-  // ── CAR Line 3 ───────────────────────────────────────────────────────
-  { name:'Jordan Staal',       nhlId:8474600, pos:'C', team:'CAR', opp:'VGK', line:3, salary:6600,  fpavg:5.6,  pp:'PP1', pk:true,
-    l5:{ g:5, a1:1, a2:0, sog:16, blk:4, hdc:9,  gp:5, dk:15.90 },
-    l10:{ g:4, a1:1, a2:1, sog:13, blk:6, hdc:7,  gp:5, dk:9.60  } },
-
-  { name:'Seth Jarvis',        nhlId:8482074, pos:'W', team:'CAR', opp:'VGK', line:3, salary:9400,  fpavg:12.1, pp:'PP1', pk:false,
-    l5:{ g:2, a1:2, a2:0, sog:10, blk:3, hdc:4,  gp:5, dk:9.20  },
-    l10:{ g:2, a1:2, a2:2, sog:11, blk:1, hdc:4,  gp:5, dk:9.10  } },
-
-  { name:'Nikolaj Ehlers',     nhlId:8478470, pos:'W', team:'CAR', opp:'VGK', line:3, salary:8400,  fpavg:11.4, pp:'PP2', pk:false,
-    l5:{ g:3, a1:3, a2:1, sog:13, blk:0, hdc:2,  gp:5, dk:12.60 },
-    l10:{ g:3, a1:2, a2:1, sog:11, blk:1, hdc:3,  gp:5, dk:11.10 } },
-
-  { name:'Shayne Gostisbehere',nhlId:8478476, pos:'D', team:'CAR', opp:'VGK', line:3, salary:6000,  fpavg:7.8,  pp:'PP1', pk:false,
-    l5:{ g:2, a1:3, a2:0, sog:5,  blk:4, hdc:1,  gp:5, dk:8.90  },
-    l10:{ g:2, a1:4, a2:2, sog:5,  blk:2, hdc:1,  gp:5, dk:9.10  } },
-
-  { name:'Alexander Nikishin', nhlId:8482716, pos:'D', team:'CAR', opp:'VGK', line:3, salary:2600,  fpavg:3.0,  pp:'PP2', pk:false,
-    l5:{ g:0, a1:1, a2:0, sog:6,  blk:2, hdc:0,  gp:5, dk:3.30  },
-    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0,  gp:5, dk:2.70  } },
-
-  // ── CAR Line 4 ───────────────────────────────────────────────────────
-  { name:'Eric Robinson',      nhlId:8479048, pos:'W', team:'CAR', opp:'VGK', line:4, salary:2200,  fpavg:4.8,  pp:'',    pk:false,
-    l5:{ g:1, a1:2, a2:0, sog:7,  blk:10, hdc:1, gp:5, dk:6.10  },
-    l10:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5, dk:6.10  } },
-
-  { name:'Mark Jankowski',     nhlId:8478018, pos:'C', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:4.4,  pp:'',    pk:false,
-    l5:{ g:1, a1:0, a2:0, sog:5,  blk:2, hdc:2,  gp:5, dk:3.70  },
-    l10:{ g:1, a1:0, a2:0, sog:7,  blk:4, hdc:3,  gp:5, dk:4.60  } },
-
-  { name:'William Carrier',    nhlId:8479395, pos:'W', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:3.5,  pp:'',    pk:false,
-    l5:{ g:0, a1:2, a2:0, sog:1,  blk:2, hdc:0,  gp:5, dk:2.80  },
-    l10:{ g:0, a1:2, a2:2, sog:6,  blk:1, hdc:2,  gp:5, dk:3.90  } },
-
-  // ── VGK Line 1 ───────────────────────────────────────────────────────
-  { name:'Shea Theodore',      nhlId:8477447, pos:'D', team:'VGK', opp:'CAR', line:1, salary:8000,  fpavg:9.7,  pp:'PP1', pk:false,
-    l5:{ g:2, a1:5, a2:1, sog:8,  blk:4, hdc:0,  gp:5, dk:15.50 },
-    l10:{ g:2, a1:5, a2:1, sog:6,  blk:7, hdc:0,  gp:5, dk:13.80 } },
-
-  { name:'Jack Eichel',        nhlId:8478402, pos:'C', team:'VGK', opp:'CAR', line:1, salary:10400, fpavg:13.6, pp:'PP1', pk:false,
-    l5:{ g:0, a1:2, a2:0, sog:8,  blk:6, hdc:0,  gp:5, dk:6.60  },
-    l10:{ g:0, a1:2, a2:2, sog:8,  blk:6, hdc:0,  gp:5, dk:9.70  } },
-
-  { name:'Mark Stone',         nhlId:8475913, pos:'W', team:'VGK', opp:'CAR', line:1, salary:7600,  fpavg:10.4, pp:'PP1', pk:false,
-    l5:{ g:3, a1:0, a2:0, sog:13, blk:7, hdc:17, gp:5, dk:12.00 },
-    l10:{ g:3, a1:0, a2:0, sog:11, blk:3, hdc:8,  gp:5, dk:10.30 } },
-
-  { name:'Ivan Barbashev',     nhlId:8478009, pos:'W', team:'VGK', opp:'CAR', line:1, salary:5400,  fpavg:7.5,  pp:'PP2', pk:true,
-    l5:{ g:1, a1:1, a2:1, sog:11, blk:5, hdc:7,  gp:5, dk:8.50  },
-    l10:{ g:1, a1:1, a2:1, sog:10, blk:0, hdc:7,  gp:5, dk:8.30  } },
-
-  { name:'Brayden McNabb',     nhlId:8475692, pos:'D', team:'VGK', opp:'CAR', line:1, salary:4400,  fpavg:7.0,  pp:'',    pk:true,
-    l5:{ g:0, a1:7, a2:3, sog:1,  blk:4, hdc:0,  gp:5, dk:8.90  },
-    l10:{ g:0, a1:6, a2:4, sog:1,  blk:0, hdc:0,  gp:5, dk:7.00  } },
-
-  // ── VGK Line 2 ───────────────────────────────────────────────────────
-  { name:'Mitch Marner',       nhlId:8478483, pos:'W', team:'VGK', opp:'CAR', line:2, salary:9800,  fpavg:11.6, pp:'PP1', pk:false,
-    l5:{ g:3, a1:5, a2:2, sog:16, blk:2, hdc:7,  gp:5, dk:17.50 },
-    l10:{ g:3, a1:6, a2:5, sog:9,  blk:0, hdc:8,  gp:5, dk:13.40 } },
-
-  { name:'Brett Howden',       nhlId:8479987, pos:'W', team:'VGK', opp:'CAR', line:2, salary:6400,  fpavg:6.8,  pp:'PP2', pk:false,
-    l5:{ g:4, a1:2, a2:0, sog:10, blk:4, hdc:8,  gp:5, dk:13.40 },
-    l10:{ g:4, a1:2, a2:0, sog:11, blk:5, hdc:9,  gp:5, dk:11.20 } },
-
-  { name:'William Karlsson',   nhlId:8476948, pos:'C', team:'VGK', opp:'CAR', line:2, salary:4800,  fpavg:7.7,  pp:'PP2', pk:true,
-    l5:{ g:2, a1:2, a2:1, sog:11, blk:3, hdc:3,  gp:5, dk:9.50  },
-    l10:{ g:2, a1:2, a2:2, sog:4,  blk:1, hdc:1,  gp:5, dk:9.10  } },
-
-  { name:'Noah Hanifin',       nhlId:8478476, pos:'D', team:'VGK', opp:'CAR', line:2, salary:3200,  fpavg:8.2,  pp:'PP2', pk:true,
-    l5:{ g:0, a1:1, a2:0, sog:5,  blk:13, hdc:1, gp:5, dk:7.70  },
-    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0,  gp:5, dk:7.90  } },
-
-  { name:'Rasmus Andersson',   nhlId:8479987, pos:'D', team:'VGK', opp:'CAR', line:2, salary:5000,  fpavg:10.2, pp:'PP2', pk:false,
-    l5:{ g:0, a1:1, a2:1, sog:9,  blk:7, hdc:1,  gp:5, dk:6.40  },
-    l10:{ g:0, a1:0, a2:0, sog:8,  blk:0, hdc:0,  gp:5, dk:7.20  } },
-
-  // ── VGK Line 3 ───────────────────────────────────────────────────────
-  { name:'Tomas Hertl',        nhlId:8476454, pos:'W', team:'VGK', opp:'CAR', line:3, salary:5600,  fpavg:10.7, pp:'PP1', pk:false,
-    l5:{ g:2, a1:2, a2:1, sog:9,  blk:2, hdc:5,  gp:5, dk:8.60  },
-    l10:{ g:2, a1:2, a2:1, sog:10, blk:2, hdc:6,  gp:5, dk:9.20  } },
-
-  { name:'Pavel Dorofeyev',    nhlId:8482671, pos:'W', team:'VGK', opp:'CAR', line:3, salary:7800,  fpavg:10.5, pp:'PP1', pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:9,  blk:3, hdc:19, gp:5, dk:3.50  },
-    l10:{ g:0, a1:0, a2:0, sog:10, blk:0, hdc:4,  gp:5, dk:9.60  } },
-
-  { name:'Dylan Coghlan',      nhlId:8481535, pos:'D', team:'VGK', opp:'CAR', line:3, salary:2000,  fpavg:3.8,  pp:'',    pk:false,
-    l5:{ g:0, a1:1, a2:0, sog:2,  blk:4, hdc:0,  gp:5, dk:2.60  },
-    l10:{ g:0, a1:2, a2:2, sog:5,  blk:1, hdc:1,  gp:5, dk:5.10  } },
-
-  { name:'Jeremy Lauzon',      nhlId:8479343, pos:'D', team:'VGK', opp:'CAR', line:3, salary:2400,  fpavg:3.5,  pp:'',    pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:0,  blk:5, hdc:0,  gp:4, dk:3.50  },
-    l10:{ g:0, a1:0, a2:0, sog:0,  blk:5, hdc:0,  gp:4, dk:3.80  } },
-
-  { name:'Colton Sissons',     nhlId:8477941, pos:'C', team:'VGK', opp:'CAR', line:3, salary:2800,  fpavg:5.0,  pp:'',    pk:true,
-    l5:{ g:0, a1:2, a2:0, sog:6,  blk:5, hdc:4,  gp:5, dk:5.40  },
-    l10:{ g:0, a1:1, a2:1, sog:5,  blk:4, hdc:0,  gp:5, dk:4.00  } },
-
-  // ── VGK Line 4 ───────────────────────────────────────────────────────
-  { name:'Nic Dowd',           nhlId:8477007, pos:'C', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:5.6,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:0, sog:5,  blk:3, hdc:4,  gp:5, dk:3.50  },
-    l10:{ g:0, a1:1, a2:0, sog:5,  blk:5, hdc:1,  gp:5, dk:4.00  } },
-
-  { name:'Cole Smith',         nhlId:8480802, pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:3.0,  pp:'',    pk:false,
-    l5:{ g:1, a1:1, a2:0, sog:6,  blk:1, hdc:4,  gp:5, dk:4.80  },
-    l10:{ g:1, a1:1, a2:0, sog:6,  blk:1, hdc:4,  gp:5, dk:2.80  } },
-
-  { name:'Keegan Kolesar',     nhlId:8479394, pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:4.5,  pp:'',    pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:2,  blk:2, hdc:1,  gp:5, dk:1.10  },
-    l10:{ g:0, a1:0, a2:0, sog:3,  blk:2, hdc:3,  gp:5, dk:2.30  } },
-];
   // ── CAR Line 1 ───────────────────────────────────────────────────────
   // Svechnikov: ES quiet (1G,2A,5sog L5), AS shows 3pts — PP dependent lately
   { name:'Andrei Svechnikov',  pos:'W', team:'CAR', opp:'VGK', line:1, salary:7200,  fpavg:9.3,  pp:'PP1', pk:false,
@@ -995,7 +783,7 @@ function renderRankings() {
     return `<tr class="${isOvr?'pinned':''}">
       <td><span class="rank">${i+1}</span></td>
       <td>
-        <div class="pname"><span class="player-link" onclick="openCard(${p.nhlId||0},'${p.name.replace(/'/g,"\\'")}','${p.pos}','${p.team}',${p.salary},${p._proj})">${p.name}</span>${isOvr?'<span class="ovr-badge">OVR</span>':''}</div>
+        <div class="pname">${p.name}${isOvr?'<span class="ovr-badge">OVR</span>':''}</div>
         <div class="pmeta">Line ${p.line} · ${p.pp||'EVS'} ${ppDot}${pkDot}</div>
       </td>
       <td><span class="chip chip-${p.pos}">${p.pos}</span><span class="chip chip-${p.team}">${p.team}</span></td>
@@ -1149,210 +937,6 @@ function renderOverrides() {
 }
 
 renderRankings();
-</script>
-
-<script>
-// ── Live series fetch from ESPN ───────────────────────────────────────────
-async function fetchSeriesInfo() {
-  try {
-    const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard');
-    const data = await res.json();
-    const events = data.events || [];
-
-    const scf = events.find(e => {
-      const comps = e.competitions?.[0]?.competitors || [];
-      const abbrs = comps.map(c => c.team.abbreviation);
-      return abbrs.includes('VGK') && abbrs.includes('CAR');
-    });
-
-    if (!scf) return;
-
-    const comp   = scf.competitions[0];
-    const status = comp.status?.type?.name;
-    const teams  = comp.competitors;
-    const home   = teams.find(t => t.homeAway === 'home');
-    const away   = teams.find(t => t.homeAway === 'away');
-    const note   = comp.notes?.[0]?.headline || '';
-
-    const gameMatch = note.match(/Game\s+(\d+)/i);
-    const gameNum   = gameMatch ? gameMatch[1] : '5';
-    const seriesNote = note.includes('leads') || note.includes('Tied')
-                     ? note.split('-').slice(1).join('-').trim() : '';
-
-    const homeSc  = home?.score ?? '';
-    const awaySc  = away?.score ?? '';
-    const homeAbr = home?.team?.abbreviation || '';
-    const awayAbr = away?.team?.abbreviation || '';
-
-    const venue = comp.venue?.fullName || '';
-    const city  = comp.venue?.address?.city || '';
-    const dt    = new Date(scf.date);
-    const dateStr = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
-    const timeStr = dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZoneName:'short' });
-
-    let oddsStr = '';
-    const odds = comp.odds?.[0];
-    if (odds?.overUnder) oddsStr += ` · O/U ${odds.overUnder}`;
-    const hml = odds?.homeTeamOdds?.moneyLine;
-    const aml = odds?.awayTeamOdds?.moneyLine;
-    if (hml && aml) {
-      const fav = hml < aml
-        ? `${homeAbr} ${hml > 0 ? '+' : ''}${hml}`
-        : `${awayAbr} ${aml > 0 ? '+' : ''}${aml}`;
-      oddsStr += ` · ${fav}`;
-    }
-
-    const isLive = status === 'STATUS_IN_PROGRESS';
-    const dot = document.querySelector('.live-dot');
-    if (dot) dot.style.background = isLive ? '#c8112a' : '#1a7a4a';
-
-    const pillGame = document.getElementById('pill-game');
-    if (pillGame) pillGame.textContent = `Stanley Cup Final · Game ${gameNum}`;
-
-    const pillScore = document.getElementById('pill-score');
-    if (pillScore) {
-      if (isLive || status === 'STATUS_FINAL') {
-        pillScore.textContent = `${awayAbr} ${awaySc} — ${homeAbr} ${homeSc}`;
-      } else {
-        pillScore.textContent = seriesNote || 'Series Tied 2-2';
-      }
-    }
-
-    const pillInfo = document.getElementById('pill-info');
-    if (pillInfo) pillInfo.textContent = `${dateStr} · ${timeStr} · ${venue}${city ? ', ' + city : ''}${oddsStr}`;
-
-  } catch(e) {
-    console.log('Series fetch failed:', e.message);
-  }
-}
-
-fetchSeriesInfo();
-setInterval(fetchSeriesInfo, 60000);
-
-// ── Player Card ──────────────────────────────────────────────────────────
-async function openCard(nhlId, name, pos, team, salary, proj) {
-  const overlay = document.getElementById('modal-overlay');
-  const body    = document.getElementById('pc-body');
-  document.getElementById('pc-name').textContent = name;
-  document.getElementById('pc-meta').textContent = `${pos} · ${team} · $${(salary/1000).toFixed(1)}K · EW Proj: ${proj.toFixed(2)}`;
-  body.innerHTML = '<div class="pc-loading">Loading playoff game log...</div>';
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  if (!nhlId) {
-    body.innerHTML = '<div class="pc-error">No NHL ID on file for this player.</div>';
-    return;
-  }
-
-  try {
-    // NHL API: game log for player, 2024-25 season, playoffs (game type 3)
-    const url = `https://api-web.nhle.com/v1/player/${nhlId}/game-log/20242025/3`;
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const games = (data.gameLog || []).slice(-5).reverse(); // last 5
-
-    if (!games.length) {
-      body.innerHTML = '<div class="pc-error">No playoff game log data found.</div>';
-      return;
-    }
-
-    // Totals row
-    const tot = games.reduce((acc, g) => ({
-      goals:    acc.goals    + (g.goals    || 0),
-      assists:  acc.assists  + (g.assists  || 0),
-      points:   acc.points   + (g.points   || 0),
-      shots:    acc.shots    + (g.shots    || 0),
-      hits:     acc.hits     + (g.hits     || 0),
-      blockedShots: acc.blockedShots + (g.blockedShots || 0),
-      pim:      acc.pim      + (g.pim      || 0),
-    }), { goals:0, assists:0, points:0, shots:0, hits:0, blockedShots:0, pim:0 });
-
-    const rows = games.map(g => {
-      const opp    = g.opponentAbbrev || '—';
-      const home   = g.homeRoadFlag === 'H' ? '' : '@';
-      const date   = g.gameDate ? new Date(g.gameDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
-      const g_     = g.goals    || 0;
-      const a_     = g.assists  || 0;
-      const pts    = g.points   || 0;
-      const sog    = g.shots    || 0;
-      const hits   = g.hits     || 0;
-      const blk    = g.blockedShots || 0;
-      const pim    = g.pim      || 0;
-      return `<tr>
-        <td>${date} ${home}${opp}</td>
-        <td class="${g_>0?'goal':''}">${g_}</td>
-        <td>${a_}</td>
-        <td class="${pts>0?'pt-cell':''}">${pts}</td>
-        <td>${sog}</td>
-        <td>${hits}</td>
-        <td>${blk}</td>
-        <td>${pim}</td>
-      </tr>`;
-    }).join('');
-
-    const totRow = `<tr>
-      <td>L${games.length} TOTALS</td>
-      <td class="${tot.goals>0?'goal':''}">${tot.goals}</td>
-      <td>${tot.assists}</td>
-      <td class="${tot.points>0?'pt-cell':''}">${tot.points}</td>
-      <td>${tot.shots}</td>
-      <td>${tot.hits}</td>
-      <td>${tot.blockedShots}</td>
-      <td>${tot.pim}</td>
-    </tr>`;
-
-    // DK pts from PLAYERS data
-    const pData = PLAYERS.find(p => p.nhlId === nhlId);
-    const dkBoxes = pData ? `
-      <div class="pc-dk-row">
-        <div class="pc-dk-box">
-          <div class="pc-dk-label">L5 DK/gm</div>
-          <div class="pc-dk-val ${pData.l5.dk >= 10 ? 'hot' : ''}">${pData.l5.dk.toFixed(2)}</div>
-        </div>
-        <div class="pc-dk-box">
-          <div class="pc-dk-label">L10 DK/gm</div>
-          <div class="pc-dk-val ${pData.l10.dk >= 10 ? 'hot' : ''}">${pData.l10.dk.toFixed(2)}</div>
-        </div>
-        <div class="pc-dk-box">
-          <div class="pc-dk-label">Season avg</div>
-          <div class="pc-dk-val">${pData.fpavg.toFixed(1)}</div>
-        </div>
-        <div class="pc-dk-box">
-          <div class="pc-dk-label">EW Proj</div>
-          <div class="pc-dk-val ${proj >= 10 ? 'hot' : ''}">${proj.toFixed(2)}</div>
-        </div>
-      </div>` : '';
-
-    body.innerHTML = `
-      <div class="pc-table-wrap">
-        <table class="pc-table">
-          <thead>
-            <tr>
-              <th>Game</th><th>G</th><th>A</th><th>PTS</th>
-              <th>SOG</th><th>HIT</th><th>BLK</th><th>PIM</th>
-            </tr>
-          </thead>
-          <tbody>${rows}${totRow}</tbody>
-        </table>
-      </div>
-      ${dkBoxes}`;
-
-  } catch(e) {
-    body.innerHTML = `<div class="pc-error">Could not load game log: ${e.message}</div>`;
-  }
-}
-
-function closeCard() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeCard();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
 </script>
 </body>
 </html>
