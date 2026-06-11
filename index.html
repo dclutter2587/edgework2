@@ -479,160 +479,202 @@ const TEAM_DEF = {
   CAR: 46.2,  // elite defense
 };
 
-/* ── Player data from EdgeWork sheet ────────────────────────────────────
-   fpavg  = Season DK/game estimate
-   l5.dk  = Last 5 DK/game estimate  (used directly, no formula needed)
-   l10.dk = Last 10 DK/game estimate
-   NST stats still used for shot/block bonus detection
+/* ── Player data — Game 4 SCF VGK leads 2-1 ─────────────────────────────
+   DFF slate: salaries, DK/game estimates (L5, L10, season), PP/line info
+   NST L5 ES:  last 5 even strength — pure underlying production
+   NST L5 AS:  last 5 all strength  — includes PP/PK opportunity
+   NST season 5v5 + PK: baseline context for over/underperformance
+   l5.dk / l10.dk = DFF DK/game estimates (primary projection inputs)
+   l5 stats = from NST L5 ES (shot/block bonus detection + context)
 ── */
 const PLAYERS = [
   // ── CAR Line 1 ───────────────────────────────────────────────────────
-  { name:'Andrei Svechnikov',  pos:'W', team:'CAR', opp:'VGK', line:1, salary:7600,  fpavg:9.3,  pp:'PP1', pk:false,
-    l5:{ g:1, a1:1, a2:0, sog:9,  blk:2, hdc:5, gp:5, dk:7.82  },
-    l10:{ g:2, a1:2, a2:0, sog:11, blk:2, hdc:9, gp:5, dk:10.77 } },
+  // Svechnikov: ES quiet (1G,2A,5sog L5), AS shows 3pts — PP dependent lately
+  { name:'Andrei Svechnikov',  pos:'W', team:'CAR', opp:'VGK', line:1, salary:7200,  fpavg:9.3,  pp:'PP1', pk:false,
+    l5:{ g:1, a1:2, a2:0, sog:5,  blk:0, hdc:10, gp:5, dk:5.70  },
+    l10:{ g:2, a1:2, a2:0, sog:8,  blk:0, hdc:9,  gp:5, dk:8.80  } },
 
-  { name:'Jalen Chatfield',    pos:'D', team:'CAR', opp:'VGK', line:1, salary:3800,  fpavg:4.9,  pp:'',    pk:false,
-    l5:{ g:0, a1:3, a2:2, sog:7,  blk:4, hdc:0, gp:5, dk:12.52 },
-    l10:{ g:0, a1:3, a2:2, sog:8,  blk:4, hdc:1, gp:5, dk:12.98 } },
+  // Chatfield: 0pts ES but 3A total, shots + blocks working
+  { name:'Jalen Chatfield',    pos:'D', team:'CAR', opp:'VGK', line:1, salary:4000,  fpavg:4.9,  pp:'',    pk:false,
+    l5:{ g:0, a1:2, a2:1, sog:7,  blk:13, hdc:0, gp:5, dk:11.10 },
+    l10:{ g:0, a1:2, a2:1, sog:8,  blk:13, hdc:0, gp:5, dk:9.30  } },
 
-  { name:'Sebastian Aho',      pos:'C', team:'CAR', opp:'VGK', line:1, salary:9000,  fpavg:11.3, pp:'PP1', pk:true,
-    l5:{ g:0, a1:2, a2:2, sog:5,  blk:1, hdc:3, gp:5, dk:5.78  },
-    l10:{ g:1, a1:4, a2:2, sog:10, blk:2, hdc:4, gp:5, dk:10.99 } },
+  // Aho: ES cold (0G,0A,11sog) but 5A all strength — PP doing the work
+  { name:'Sebastian Aho',      pos:'C', team:'CAR', opp:'VGK', line:1, salary:9200,  fpavg:11.3, pp:'PP1', pk:true,
+    l5:{ g:0, a1:2, a2:3, sog:11, blk:0, hdc:4,  gp:5, dk:9.30  },
+    l10:{ g:1, a1:4, a2:2, sog:10, blk:2, hdc:4,  gp:5, dk:8.10  } },
 
+  // Martinook: 1G ES, 13 shots, 7 HDC — underrated shot volume
   { name:'Jordan Martinook',   pos:'W', team:'CAR', opp:'VGK', line:1, salary:3400,  fpavg:6.1,  pp:'',    pk:true,
-    l5:{ g:1, a1:0, a2:0, sog:12, blk:2, hdc:9, gp:5, dk:11.60 },
-    l10:{ g:1, a1:0, a2:0, sog:13, blk:2, hdc:9, gp:5, dk:10.97 } },
+    l5:{ g:1, a1:0, a2:0, sog:13, blk:1, hdc:7,  gp:5, dk:11.60 },
+    l10:{ g:1, a1:0, a2:0, sog:13, blk:2, hdc:9,  gp:5, dk:4.80  } },
 
+  // Slavin: 0pts ES, 3sog, PK stalwart, blocks accumulate
   { name:'Jaccob Slavin',      pos:'D', team:'CAR', opp:'VGK', line:1, salary:3600,  fpavg:7.5,  pp:'PP1', pk:true,
-    l5:{ g:0, a1:2, a2:2, sog:2,  blk:5, hdc:1, gp:5, dk:8.18  },
-    l10:{ g:0, a1:2, a2:2, sog:2,  blk:6, hdc:1, gp:5, dk:8.61  } },
+    l5:{ g:0, a1:2, a2:0, sog:3,  blk:0, hdc:1,  gp:5, dk:5.10  },
+    l10:{ g:0, a1:2, a2:2, sog:2,  blk:6, hdc:1,  gp:5, dk:6.50  } },
 
   // ── CAR Line 2 ───────────────────────────────────────────────────────
-  { name:'Taylor Hall',        pos:'W', team:'CAR', opp:'VGK', line:2, salary:7200,  fpavg:7.1,  pp:'PP2', pk:false,
-    l5:{ g:2, a1:2, a2:2, sog:13, blk:1, hdc:7, gp:5, dk:12.88 },
-    l10:{ g:2, a1:2, a2:2, sog:14, blk:1, hdc:10, gp:5, dk:12.23 } },
+  // Hall: 2G,3A ES in 5 games — genuinely hot, 14 shots
+  { name:'Taylor Hall',        pos:'W', team:'CAR', opp:'VGK', line:2, salary:7400,  fpavg:7.1,  pp:'PP2', pk:false,
+    l5:{ g:2, a1:3, a2:0, sog:14, blk:4, hdc:8,  gp:5, dk:12.20 },
+    l10:{ g:2, a1:2, a2:2, sog:14, blk:1, hdc:10, gp:5, dk:12.00 } },
 
+  // Stankoven: 3G,3A ES — elite production, both windows strong
   { name:'Logan Stankoven',    pos:'C', team:'CAR', opp:'VGK', line:2, salary:8800,  fpavg:7.7,  pp:'PP2', pk:false,
-    l5:{ g:3, a1:3, a2:1, sog:14, blk:2, hdc:7, gp:5, dk:14.80 },
-    l10:{ g:3, a1:3, a2:1, sog:15, blk:2, hdc:8, gp:5, dk:14.05 } },
+    l5:{ g:3, a1:3, a2:1, sog:11, blk:0, hdc:5,  gp:5, dk:12.00 },
+    l10:{ g:3, a1:3, a2:1, sog:15, blk:0, hdc:8,  gp:5, dk:10.10 } },
 
+  // Blake: 2G,3A ES L5, 9 shots, 7 HDC — breakout series
   { name:'Jackson Blake',      pos:'W', team:'CAR', opp:'VGK', line:2, salary:6800,  fpavg:6.2,  pp:'PP2', pk:false,
-    l5:{ g:1, a1:3, a2:1, sog:10, blk:1, hdc:10, gp:5, dk:11.98 },
-    l10:{ g:1, a1:3, a2:1, sog:10, blk:1, hdc:10, gp:5, dk:10.28 } },
+    l5:{ g:2, a1:3, a2:0, sog:9,  blk:2, hdc:7,  gp:5, dk:9.60  },
+    l10:{ g:2, a1:3, a2:0, sog:9,  blk:2, hdc:7,  gp:5, dk:11.80 } },
 
-  { name:"K'Andre Miller",     pos:'D', team:'CAR', opp:'VGK', line:2, salary:4000,  fpavg:7.0,  pp:'PP2', pk:false,
-    l5:{ g:0, a1:2, a2:2, sog:4,  blk:7, hdc:1, gp:5, dk:7.56  },
-    l10:{ g:0, a1:2, a2:2, sog:5,  blk:10, hdc:1, gp:5, dk:8.08  } },
+  // Miller: 0pts ES, 4sog, blocks reliable
+  { name:"K'Andre Miller",     pos:'D', team:'CAR', opp:'VGK', line:2, salary:3000,  fpavg:7.0,  pp:'PP2', pk:false,
+    l5:{ g:0, a1:1, a2:0, sog:4,  blk:4, hdc:1,  gp:5, dk:4.60  },
+    l10:{ g:0, a1:2, a2:2, sog:5,  blk:10, hdc:1, gp:5, dk:7.00  } },
 
-  { name:'Sean Walker',        pos:'D', team:'CAR', opp:'VGK', line:2, salary:4800,  fpavg:5.7,  pp:'',    pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:6,  blk:7, hdc:0, gp:5, dk:4.06  },
-    l10:{ g:0, a1:0, a2:0, sog:7,  blk:7, hdc:0, gp:5, dk:4.68  } },
+  // Walker: 0pts, 6sog, 5blk — pure floor play
+  { name:'Sean Walker',        pos:'D', team:'CAR', opp:'VGK', line:2, salary:4600,  fpavg:5.7,  pp:'',    pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:6,  blk:5, hdc:0,  gp:5, dk:4.20  },
+    l10:{ g:0, a1:0, a2:0, sog:7,  blk:7, hdc:0,  gp:5, dk:5.10  } },
 
   // ── CAR Line 3 ───────────────────────────────────────────────────────
-  { name:'Jordan Staal',       pos:'C', team:'CAR', opp:'VGK', line:3, salary:4600,  fpavg:5.6,  pp:'PP1', pk:true,
-    l5:{ g:3, a1:0, a2:0, sog:8,  blk:6, hdc:3, gp:5, dk:11.84 },
-    l10:{ g:4, a1:1, a2:1, sog:13, blk:6, hdc:7, gp:5, dk:16.15 } },
+  // Staal: 5G,1A ALL strength L5 — on absolute fire, PP1, PK, faceoffs
+  { name:'Jordan Staal',       pos:'C', team:'CAR', opp:'VGK', line:3, salary:6600,  fpavg:5.6,  pp:'PP1', pk:true,
+    l5:{ g:5, a1:1, a2:0, sog:16, blk:4, hdc:9,  gp:5, dk:15.90 },
+    l10:{ g:4, a1:1, a2:1, sog:13, blk:6, hdc:7,  gp:5, dk:9.60  } },
 
-  { name:'Seth Jarvis',        pos:'W', team:'CAR', opp:'VGK', line:3, salary:9800,  fpavg:12.1, pp:'PP1', pk:false,
-    l5:{ g:1, a1:1, a2:1, sog:8,  blk:2, hdc:4, gp:5, dk:9.18  },
-    l10:{ g:2, a1:2, a2:2, sog:11, blk:1, hdc:4, gp:5, dk:12.34 } },
+  // Jarvis: 2G,2A ES solid, 10sog, good HDC
+  { name:'Seth Jarvis',        pos:'W', team:'CAR', opp:'VGK', line:3, salary:9400,  fpavg:12.1, pp:'PP1', pk:false,
+    l5:{ g:2, a1:2, a2:0, sog:10, blk:3, hdc:4,  gp:5, dk:9.20  },
+    l10:{ g:2, a1:2, a2:2, sog:11, blk:1, hdc:4,  gp:5, dk:9.10  } },
 
-  { name:'Nikolaj Ehlers',     pos:'W', team:'CAR', opp:'VGK', line:3, salary:8000,  fpavg:11.4, pp:'PP2', pk:false,
-    l5:{ g:2, a1:1, a2:0, sog:10, blk:1, hdc:3, gp:5, dk:9.82  },
-    l10:{ g:2, a1:3, a2:1, sog:11, blk:1, hdc:3, gp:5, dk:11.22 } },
+  // Ehlers: 3G,3A ALL strength, 13 shots — genuinely producing
+  { name:'Nikolaj Ehlers',     pos:'W', team:'CAR', opp:'VGK', line:3, salary:8400,  fpavg:11.4, pp:'PP2', pk:false,
+    l5:{ g:3, a1:3, a2:1, sog:13, blk:0, hdc:2,  gp:5, dk:12.60 },
+    l10:{ g:3, a1:2, a2:1, sog:11, blk:1, hdc:3,  gp:5, dk:11.10 } },
 
-  { name:'Shayne Gostisbehere',pos:'D', team:'CAR', opp:'VGK', line:3, salary:6600,  fpavg:7.8,  pp:'PP1', pk:false,
-    l5:{ g:1, a1:1, a2:0, sog:3,  blk:2, hdc:0, gp:5, dk:5.46  },
-    l10:{ g:2, a1:4, a2:2, sog:5,  blk:2, hdc:1, gp:5, dk:10.81 } },
+  // Gostisbehere: 2G,3A all strength — PP producer, ES quiet
+  { name:'Shayne Gostisbehere',pos:'D', team:'CAR', opp:'VGK', line:3, salary:6000,  fpavg:7.8,  pp:'PP1', pk:false,
+    l5:{ g:2, a1:3, a2:0, sog:5,  blk:4, hdc:1,  gp:5, dk:8.90  },
+    l10:{ g:2, a1:4, a2:2, sog:5,  blk:2, hdc:1,  gp:5, dk:9.10  } },
 
-  { name:'Alexander Nikishin', pos:'D', team:'CAR', opp:'VGK', line:3, salary:3200,  fpavg:3.0,  pp:'PP2', pk:false,
-    l5:{ g:0, a1:1, a2:0, sog:4,  blk:6, hdc:0, gp:5, dk:2.70  },
-    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0, gp:5, dk:3.20  } },
+  // Nikishin: 0pts ES, 6sog, minimal — pure punt play
+  { name:'Alexander Nikishin', pos:'D', team:'CAR', opp:'VGK', line:3, salary:2600,  fpavg:3.0,  pp:'PP2', pk:false,
+    l5:{ g:0, a1:1, a2:0, sog:6,  blk:2, hdc:0,  gp:5, dk:3.30  },
+    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0,  gp:5, dk:2.70  } },
 
   // ── CAR Line 4 ───────────────────────────────────────────────────────
-  { name:'Eric Robinson',      pos:'W', team:'CAR', opp:'VGK', line:4, salary:2600,  fpavg:4.8,  pp:'',    pk:false,
-    l5:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5, dk:8.16  },
-    l10:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5, dk:7.71  } },
+  // Robinson: 1G,2A all strength, 7shots
+  { name:'Eric Robinson',      pos:'W', team:'CAR', opp:'VGK', line:4, salary:2200,  fpavg:4.8,  pp:'',    pk:false,
+    l5:{ g:1, a1:2, a2:0, sog:7,  blk:10, hdc:1, gp:5, dk:6.10  },
+    l10:{ g:1, a1:2, a2:0, sog:8,  blk:10, hdc:2, gp:5, dk:6.10  } },
 
-  { name:'Mark Jankowski',     pos:'C', team:'CAR', opp:'VGK', line:4, salary:2200,  fpavg:4.4,  pp:'',    pk:false,
-    l5:{ g:1, a1:0, a2:0, sog:7,  blk:4, hdc:3, gp:5, dk:6.74  },
-    l10:{ g:1, a1:0, a2:0, sog:7,  blk:4, hdc:3, gp:5, dk:6.09  } },
+  // Jankowski: 1G all strength, 5sog
+  { name:'Mark Jankowski',     pos:'C', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:4.4,  pp:'',    pk:false,
+    l5:{ g:1, a1:0, a2:0, sog:5,  blk:2, hdc:2,  gp:5, dk:3.70  },
+    l10:{ g:1, a1:0, a2:0, sog:7,  blk:4, hdc:3,  gp:5, dk:4.60  } },
 
+  // Carrier: 0pts ES, 1sog — true punt
   { name:'William Carrier',    pos:'W', team:'CAR', opp:'VGK', line:4, salary:2000,  fpavg:3.5,  pp:'',    pk:false,
-    l5:{ g:0, a1:2, a2:2, sog:6,  blk:1, hdc:2, gp:5, dk:4.96  },
-    l10:{ g:0, a1:2, a2:2, sog:6,  blk:1, hdc:2, gp:5, dk:4.51  } },
+    l5:{ g:0, a1:2, a2:0, sog:1,  blk:2, hdc:0,  gp:5, dk:2.80  },
+    l10:{ g:0, a1:2, a2:2, sog:6,  blk:1, hdc:2,  gp:5, dk:3.90  } },
 
   // ── VGK Line 1 ───────────────────────────────────────────────────────
-  { name:'Shea Theodore',      pos:'D', team:'VGK', opp:'CAR', line:1, salary:7800,  fpavg:9.7,  pp:'PP1', pk:false,
-    l5:{ g:2, a1:5, a2:1, sog:4,  blk:7, hdc:0, gp:5, dk:14.82 },
-    l10:{ g:2, a1:5, a2:1, sog:6,  blk:7, hdc:0, gp:5, dk:14.72 } },
+  // Theodore: 2G,5A all strength — leading all D in this series
+  { name:'Shea Theodore',      pos:'D', team:'VGK', opp:'CAR', line:1, salary:8000,  fpavg:9.7,  pp:'PP1', pk:false,
+    l5:{ g:2, a1:5, a2:1, sog:8,  blk:4, hdc:0,  gp:5, dk:15.50 },
+    l10:{ g:2, a1:5, a2:1, sog:6,  blk:7, hdc:0,  gp:5, dk:13.80 } },
 
-  { name:'Jack Eichel',        pos:'C', team:'VGK', opp:'CAR', line:1, salary:10600, fpavg:13.6, pp:'PP1', pk:false,
-    l5:{ g:0, a1:1, a2:1, sog:2,  blk:0, hdc:0, gp:5, dk:6.90  },
-    l10:{ g:0, a1:2, a2:2, sog:6,  blk:0, hdc:0, gp:5, dk:8.86  } },
+  // Eichel: 0G,2A all strength — cold stretch but 8sog, salary premium
+  { name:'Jack Eichel',        pos:'C', team:'VGK', opp:'CAR', line:1, salary:10400, fpavg:13.6, pp:'PP1', pk:false,
+    l5:{ g:0, a1:2, a2:0, sog:8,  blk:6, hdc:0,  gp:5, dk:6.60  },
+    l10:{ g:0, a1:2, a2:2, sog:8,  blk:6, hdc:0,  gp:5, dk:9.70  } },
 
-  { name:'Mark Stone',         pos:'W', team:'VGK', opp:'CAR', line:1, salary:7400,  fpavg:10.4, pp:'PP1', pk:false,
-    l5:{ g:2, a1:1, a2:1, sog:7,  blk:3, hdc:2, gp:5, dk:9.82  },
-    l10:{ g:3, a1:1, a2:1, sog:11, blk:3, hdc:8, gp:5, dk:13.02 } },
+  // Stone: 3G all strength — hot, 13sog, 17HDC
+  { name:'Mark Stone',         pos:'W', team:'VGK', opp:'CAR', line:1, salary:7600,  fpavg:10.4, pp:'PP1', pk:false,
+    l5:{ g:3, a1:0, a2:0, sog:13, blk:7, hdc:17, gp:5, dk:12.00 },
+    l10:{ g:3, a1:0, a2:0, sog:11, blk:3, hdc:8,  gp:5, dk:10.30 } },
 
-  { name:'Ivan Barbashev',     pos:'W', team:'VGK', opp:'CAR', line:1, salary:5800,  fpavg:7.5,  pp:'PP2', pk:true,
-    l5:{ g:1, a1:1, a2:1, sog:10, blk:0, hdc:7, gp:5, dk:9.66  },
-    l10:{ g:1, a1:1, a2:1, sog:10, blk:0, hdc:7, gp:5, dk:8.46  } },
+  // Barbashev: 1G,1A all strength, 10sog — PP2 role, PK time
+  { name:'Ivan Barbashev',     pos:'W', team:'VGK', opp:'CAR', line:1, salary:5400,  fpavg:7.5,  pp:'PP2', pk:true,
+    l5:{ g:1, a1:1, a2:1, sog:11, blk:5, hdc:7,  gp:5, dk:8.50  },
+    l10:{ g:1, a1:1, a2:1, sog:10, blk:0, hdc:7,  gp:5, dk:8.30  } },
 
+  // McNabb: 0G,7A all strength — pure playmaker, elite assist rate
   { name:'Brayden McNabb',     pos:'D', team:'VGK', opp:'CAR', line:1, salary:4400,  fpavg:7.0,  pp:'',    pk:true,
-    l5:{ g:0, a1:6, a2:4, sog:1,  blk:2, hdc:0, gp:5, dk:12.48 },
-    l10:{ g:0, a1:6, a2:4, sog:1,  blk:0, hdc:0, gp:5, dk:12.43 } },
+    l5:{ g:0, a1:7, a2:3, sog:1,  blk:4, hdc:0,  gp:5, dk:8.90  },
+    l10:{ g:0, a1:6, a2:4, sog:1,  blk:0, hdc:0,  gp:5, dk:7.00  } },
 
   // ── VGK Line 2 ───────────────────────────────────────────────────────
-  { name:'Mitch Marner',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:10000, fpavg:11.6, pp:'PP1', pk:false,
-    l5:{ g:3, a1:4, a2:4, sog:7,  blk:0, hdc:6, gp:5, dk:22.94 },
-    l10:{ g:3, a1:6, a2:5, sog:9,  blk:0, hdc:8, gp:5, dk:25.20 } },
+  // Marner: 3G,5A all strength — best player in series right now
+  { name:'Mitch Marner',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:9800,  fpavg:11.6, pp:'PP1', pk:false,
+    l5:{ g:3, a1:5, a2:2, sog:16, blk:2, hdc:7,  gp:5, dk:17.50 },
+    l10:{ g:3, a1:6, a2:5, sog:9,  blk:0, hdc:8,  gp:5, dk:13.40 } },
 
+  // Howden: 4G,2A all strength — genuinely hot, value
   { name:'Brett Howden',       pos:'W', team:'VGK', opp:'CAR', line:2, salary:6400,  fpavg:6.8,  pp:'PP2', pk:false,
-    l5:{ g:4, a1:2, a2:0, sog:11, blk:5, hdc:9, gp:5, dk:23.34 },
-    l10:{ g:4, a1:2, a2:0, sog:11, blk:5, hdc:9, gp:5, dk:22.10 } },
+    l5:{ g:4, a1:2, a2:0, sog:10, blk:4, hdc:8,  gp:5, dk:13.40 },
+    l10:{ g:4, a1:2, a2:0, sog:11, blk:5, hdc:9,  gp:5, dk:11.20 } },
 
-  { name:'William Karlsson',   pos:'C', team:'VGK', opp:'CAR', line:2, salary:5000,  fpavg:7.7,  pp:'PP2', pk:true,
-    l5:{ g:2, a1:2, a2:2, sog:4,  blk:0, hdc:1, gp:5, dk:12.34 },
-    l10:{ g:2, a1:2, a2:2, sog:4,  blk:1, hdc:1, gp:5, dk:11.71 } },
+  // Karlsson: 2G,2A all strength, PP2 — solid two-way
+  { name:'William Karlsson',   pos:'C', team:'VGK', opp:'CAR', line:2, salary:4800,  fpavg:7.7,  pp:'PP2', pk:true,
+    l5:{ g:2, a1:2, a2:1, sog:11, blk:3, hdc:3,  gp:5, dk:9.50  },
+    l10:{ g:2, a1:2, a2:2, sog:4,  blk:1, hdc:1,  gp:5, dk:9.10  } },
 
-  { name:'Noah Hanifin',       pos:'D', team:'VGK', opp:'CAR', line:2, salary:4200,  fpavg:8.2,  pp:'PP2', pk:true,
-    l5:{ g:0, a1:1, a2:0, sog:5,  blk:0, hdc:0, gp:5, dk:7.38  },
-    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0, gp:5, dk:7.84  } },
+  // Hanifin: 0G,1A, solid blocks — value at price
+  { name:'Noah Hanifin',       pos:'D', team:'VGK', opp:'CAR', line:2, salary:3200,  fpavg:8.2,  pp:'PP2', pk:true,
+    l5:{ g:0, a1:1, a2:0, sog:5,  blk:13, hdc:1, gp:5, dk:7.70  },
+    l10:{ g:0, a1:1, a2:0, sog:6,  blk:0, hdc:0,  gp:5, dk:7.90  } },
 
-  { name:'Rasmus Andersson',   pos:'D', team:'VGK', opp:'CAR', line:2, salary:5400,  fpavg:10.2, pp:'PP2', pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:7,  blk:0, hdc:0, gp:5, dk:5.42  },
-    l10:{ g:0, a1:0, a2:0, sog:8,  blk:0, hdc:0, gp:5, dk:6.14  } },
+  // Andersson: 0G,1A, 9sog — PP2 but quiet
+  { name:'Rasmus Andersson',   pos:'D', team:'VGK', opp:'CAR', line:2, salary:5000,  fpavg:10.2, pp:'PP2', pk:false,
+    l5:{ g:0, a1:1, a2:1, sog:9,  blk:7, hdc:1,  gp:5, dk:6.40  },
+    l10:{ g:0, a1:0, a2:0, sog:8,  blk:0, hdc:0,  gp:5, dk:7.20  } },
 
   // ── VGK Line 3 ───────────────────────────────────────────────────────
-  { name:'Tomas Hertl',        pos:'W', team:'VGK', opp:'CAR', line:3, salary:6000,  fpavg:10.7, pp:'PP2', pk:false,
-    l5:{ g:2, a1:2, a2:1, sog:6,  blk:2, hdc:1, gp:5, dk:8.32  },
-    l10:{ g:3, a1:3, a2:1, sog:10, blk:2, hdc:6, gp:5, dk:12.82 } },
+  // Hertl: 2G,2A all strength, 9sog — quietly solid
+  { name:'Tomas Hertl',        pos:'W', team:'VGK', opp:'CAR', line:3, salary:5600,  fpavg:10.7, pp:'PP1', pk:false,
+    l5:{ g:2, a1:2, a2:1, sog:9,  blk:2, hdc:5,  gp:5, dk:8.60  },
+    l10:{ g:2, a1:2, a2:1, sog:10, blk:2, hdc:6,  gp:5, dk:9.20  } },
 
-  { name:'Pavel Dorofeyev',    pos:'W', team:'VGK', opp:'CAR', line:3, salary:8400,  fpavg:10.5, pp:'PP1', pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:5,  blk:0, hdc:3, gp:5, dk:4.08  },
-    l10:{ g:0, a1:0, a2:0, sog:10, blk:0, hdc:4, gp:5, dk:5.03  } },
+  // Dorofeyev: 0pts all strength — 9sog, 19HDC but nothing going in
+  { name:'Pavel Dorofeyev',    pos:'W', team:'VGK', opp:'CAR', line:3, salary:7800,  fpavg:10.5, pp:'PP1', pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:9,  blk:3, hdc:19, gp:5, dk:3.50  },
+    l10:{ g:0, a1:0, a2:0, sog:10, blk:0, hdc:4,  gp:5, dk:9.60  } },
 
+  // Coghlan: 0G,1A all strength — punt D
   { name:'Dylan Coghlan',      pos:'D', team:'VGK', opp:'CAR', line:3, salary:2000,  fpavg:3.8,  pp:'',    pk:false,
-    l5:{ g:0, a1:2, a2:2, sog:5,  blk:2, hdc:1, gp:5, dk:5.82  },
-    l10:{ g:0, a1:2, a2:2, sog:5,  blk:1, hdc:1, gp:5, dk:5.57  } },
+    l5:{ g:0, a1:1, a2:0, sog:2,  blk:4, hdc:0,  gp:5, dk:2.60  },
+    l10:{ g:0, a1:2, a2:2, sog:5,  blk:1, hdc:1,  gp:5, dk:5.10  } },
 
-  { name:'Jeremy Lauzon',      pos:'D', team:'VGK', opp:'CAR', line:3, salary:2800,  fpavg:3.5,  pp:'',    pk:false,
-    l5:{ g:0, a1:0, a2:0, sog:0,  blk:0, hdc:0, gp:3, dk:5.20  },
-    l10:{ g:0, a1:0, a2:0, sog:0,  blk:0, hdc:0, gp:3, dk:7.37  } },
+  // Lauzon: 0pts all strength, blocks
+  { name:'Jeremy Lauzon',      pos:'D', team:'VGK', opp:'CAR', line:3, salary:2400,  fpavg:3.5,  pp:'',    pk:false,
+    l5:{ g:0, a1:0, a2:0, sog:0,  blk:5, hdc:0,  gp:4, dk:3.50  },
+    l10:{ g:0, a1:0, a2:0, sog:0,  blk:5, hdc:0,  gp:4, dk:3.80  } },
 
-  { name:'Colton Sissons',     pos:'C', team:'VGK', opp:'CAR', line:3, salary:3000,  fpavg:5.0,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:1, sog:4,  blk:3, hdc:0, gp:5, dk:5.22  },
-    l10:{ g:0, a1:1, a2:1, sog:5,  blk:4, hdc:0, gp:5, dk:5.48  } },
+  // Sissons: 0G,2A all strength, PK — faceoff specialist
+  { name:'Colton Sissons',     pos:'C', team:'VGK', opp:'CAR', line:3, salary:2800,  fpavg:5.0,  pp:'',    pk:true,
+    l5:{ g:0, a1:2, a2:0, sog:6,  blk:5, hdc:4,  gp:5, dk:5.40  },
+    l10:{ g:0, a1:1, a2:1, sog:5,  blk:4, hdc:0,  gp:5, dk:4.00  } },
 
   // ── VGK Line 4 ───────────────────────────────────────────────────────
-  { name:'Nic Dowd',           pos:'C', team:'VGK', opp:'CAR', line:4, salary:2400,  fpavg:5.6,  pp:'',    pk:true,
-    l5:{ g:0, a1:1, a2:0, sog:5,  blk:4, hdc:1, gp:5, dk:6.02  },
-    l10:{ g:0, a1:1, a2:0, sog:5,  blk:5, hdc:1, gp:5, dk:5.73  } },
+  // Dowd: 0G,1A, PK role, faceoffs
+  { name:'Nic Dowd',           pos:'C', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:5.6,  pp:'',    pk:true,
+    l5:{ g:0, a1:1, a2:0, sog:5,  blk:3, hdc:4,  gp:5, dk:3.50  },
+    l10:{ g:0, a1:1, a2:0, sog:5,  blk:5, hdc:1,  gp:5, dk:4.00  } },
 
+  // Cole Smith: 1G,1A all strength — sneaky value
+  { name:'Cole Smith',         pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:3.0,  pp:'',    pk:false,
+    l5:{ g:1, a1:1, a2:0, sog:6,  blk:1, hdc:4,  gp:5, dk:4.80  },
+    l10:{ g:1, a1:1, a2:0, sog:6,  blk:1, hdc:4,  gp:5, dk:2.80  } },
+
+  // Kolesar: 0pts all strength — true punt
   { name:'Keegan Kolesar',     pos:'W', team:'VGK', opp:'CAR', line:4, salary:2000,  fpavg:4.5,  pp:'',    pk:false,
-    l5:{ g:1, a1:0, a2:0, sog:3,  blk:2, hdc:3, gp:5, dk:5.30  },
-    l10:{ g:1, a1:0, a2:0, sog:3,  blk:2, hdc:3, gp:5, dk:4.75  } },
+    l5:{ g:0, a1:0, a2:0, sog:2,  blk:2, hdc:1,  gp:5, dk:1.10  },
+    l10:{ g:0, a1:0, a2:0, sog:3,  blk:2, hdc:3,  gp:5, dk:2.30  } },
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════
